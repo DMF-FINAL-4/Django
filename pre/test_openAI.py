@@ -70,13 +70,8 @@ def extract_information_with_gpt(cleaned_html, api_key):
         )
 
         extracted_info = response['choices'][0]['message']['content'].strip()
-        json_data = json.loads(extracted_info)
-        return json_data
+        return extracted_info  # JSON 파싱 단계 제거
 
-    except json.JSONDecodeError:
-        print("JSON 디코딩 오류 발생. 응답 내용:")
-        print(response['choices'][0]['message']['content'])
-        return None
     except openai.error.AuthenticationError:
         print("오류: 인증 실패. API 키가 잘못되었거나 유효하지 않습니다.")
         return None
