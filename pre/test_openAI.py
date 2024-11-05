@@ -22,21 +22,22 @@ def extract_information_with_gpt(cleaned_html, api_key):
 
     prompt = f"""
     아래는 정제된 웹 페이지의 HTML입니다. 이 HTML에서 다음 정보를 추출하여 JSON 형식으로 반환하세요:
-    - 접근권한 : 만약 접근에 제한이 있는 페이지로 확인된다면 '에러코드', '없는 페이지', '로그인 필요' 등의 적절한 항목을 출력. 문제가 없다면 '정상'을 출력
-    - 호스트 도메인 : 
-    - 호스트 이름 : 호스트의 이름을 한글로 출력, 한글이 없다면 영어로 출력 (예시: 네이버 뉴스, 페이스북, 위키백과)
-    - 제목 : 각종 정보를 종합한 제목 (예시: '동아일보｜[이철희 칼럼] 형제애로 마련한 400억…감사 전한 튀르키예')
-    - 본문 : 본문
-    - 짧은 요약 : 본문을 30자에서 90자로 사이로 요약
-    - 긴 요약 : 본문을 200자에서 400자 사이로 요약
-    - 작성자 : 본문의 작성자
-    - 댓글 : 댓글이 있다면 '작성자 | 댓글내용 | 작성시간' 형식으로 저장
-    - 키워드 : 본문의 키워드들
-    - 유형 키워드 : 블로그, 카페, 네이버, 티스토리, 기사, 사연, 에세이, 영상, 사진, 리뷰, 쇼핑, sns 등 유형이라 할 수 있는 키워드들
-    - 작성일 : 페이지의 작성일
-    - 이미지 링크 : 주요 이미지들의 링크 주소
-    - 대체 url : Canonical URL 또는 Open Graph URL이 존재 한다면 이곳에 표시
-    
+    - 접근권한 (access_permission) : 만약 접근에 제한이 있는 페이지로 확인된다면 '에러코드', '없는 페이지', '로그인 필요' 등의 적절한 항목을 출력. 문제가 없다면 '정상'을 출력
+    - 호스트 도메인 (host_domain) :
+    - 호스트 이름 (host_name) : 호스트의 이름을 한글로 출력, 한글이 없다면 영어로 출력 (예시: 네이버 뉴스, 페이스북, 위키백과)
+    - 대체 url (alternate_url) : Canonical URL 또는 Open Graph URL이 존재 한다면 이곳에 표시
+    - 제목 (title) : 각종 정보를 종합한 제목 (예시: '동아일보｜[이철희 칼럼] 형제애로 마련한 400억…감사 전한 튀르키예')
+    - 작성자 (author) : 본문의 작성자
+    - 작성일 (date) : 페이지의 작성일
+    - 본문 (content) : 명백한 오타 수정을 제외한 텍스트 외곡이 없으며, 표 내부의 내용 등을 포함한 누락 없는 본문
+    - 짧은 요약 (short_summary) : 본문을 20자에서 90자로 사이로 요약
+    - 긴 요약 (long_summary) : 본문을 200자에서 400자 사이로 요약
+    - 키워드 (keywords) : 본문의 키워드들 내용이 길고 요소가 많다면 키워드들이 아주 많아져도 좋아
+    - 이미지 링크 (image_links) : 주요 이미지들의 링크 주소
+    - 유형 키워드 (category_keywords) : 블로그, 카페, 기사, 정보, 사연, 에세이, 영상, 사진, 리뷰, 쇼핑, sns 등 유형이라 할 수 있는 키워드들 풍부하게
+    - 댓글 (comments) : 댓글이 있다면 '작성자 | 댓글내용 | 작성시간' 형식으로 저장
+
+
 
     HTML:
     \"\"\"
@@ -45,14 +46,20 @@ def extract_information_with_gpt(cleaned_html, api_key):
 
     JSON 형식 예시:
     {{
-        "host": "호스트 이름",
+        "access_permission": "정상",
+        "host_domain": "example.com",
+        "host_name": "네이버 뉴스",
+        "alternate_url": "https://www.example.com/page-url",
         "title": "제목",
-        "content": "본문",
         "author": "작성자",
-        "comments": ["댓글1", "댓글2", ...],
-        "keywords": ["키워드1", "키워드2", ...],
-        "date": "YYYY-MM-DD"
-
+        "date": "YYYY-MM-DD",
+        "content": "본문 내용",
+        "short_summary": "본문을 20자에서 90자로 요약한 내용",
+        "long_summary": "본문을 200자에서 400자로 요약한 내용",
+        "keywords": ["키워드1", "키워드2"],
+        "image_links": ["https://example.com/image1.jpg", "https://example.com/image2.jpg"],
+        "category_keywords": ["블로그", "카페"],
+        "comments": ["작성자1 | 댓글내용1 | YYYY-MM-DD", "작성자2 | 댓글내용2 | YYYY-MM-DD"]
     }}
 
     모든 응답은 유효한 JSON 형식이어야 하며, 추가적인 텍스트는 포함하지 마세요.
@@ -99,4 +106,6 @@ print(response.status_code)  # 상태 코드를 출력
 
 
 cleaned_html = clean_html_preserve_structure(response.text)
-extract_information_with_gpt(cleaned_html, api_key)
+f_output = extract_information_with_gpt(cleaned_html, api_key)
+#테스트용 출력
+print(f_output)
