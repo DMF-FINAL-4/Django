@@ -27,6 +27,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+# 엘라스틱 서치 주소
+from elasticsearch import Elasticsearch
+es = Elasticsearch(['http://localhost:9200'])
 # api 키 가져오기
 # API_KEY = os.environ.get('MY_API_KEY')
 import os
