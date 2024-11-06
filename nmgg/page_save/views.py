@@ -1,12 +1,9 @@
-from django.shortcuts import render
+# from django.shortcuts import render
 
-from django.conf import settings
+from django.conf import settings # import openai_api_key
 
-# Create your views here.
-from .utils import HTML_cleaner_and_GPT_extractor
+from .utils import HTMLCleanerAndGPTExtractor
 
-
-def get api keys
 
 @csrf_exempt
 def process_new_page(request):

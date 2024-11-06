@@ -7,7 +7,7 @@ import openai
 import json
 from dotenv import load_dotenv
 
-class HTML_cleaner_and_GPT_extractor:
+class HTMLCleanerAndGPTExtractor:
     def __init__(self, openai_api_key):
         """
         초기화 메서드로, API 키를 초기화합니다.
