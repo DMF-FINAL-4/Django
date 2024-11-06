@@ -1,3 +1,15 @@
+
+# api 키 가져오기
+# API_KEY = os.environ.get('MY_API_KEY')
+import os
+from dotenv import load_dotenv
+load_dotenv()
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+
+# 엘라스틱 서치 주소
+from elasticsearch import Elasticsearch
+es = Elasticsearch(['http://localhost:9200'])
+
 """
 Django settings for nmgg project.
 
@@ -27,18 +39,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-# 엘라스틱 서치 주소
-from elasticsearch import Elasticsearch
-es = Elasticsearch(['http://localhost:9200'])
-
-# api 키 가져오기
-# API_KEY = os.environ.get('MY_API_KEY')
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-openai_api_key = os.getenv('OPENAI_API_KEY')
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -48,7 +48,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'page_save'
+    # 'page_save',
+    'summariz',
+    'corsheaders', # CORS를 허용하기위해
 ]
 
 MIDDLEWARE = [
@@ -59,7 +61,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware', # CORS를 허용하기위해
 ]
+# CORS를 허용하기위해
+CORS_ALLOW_ALL_ORIGINS = True
 
 ROOT_URLCONF = 'nmgg.urls'
 
