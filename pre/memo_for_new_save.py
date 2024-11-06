@@ -56,3 +56,52 @@ def new_page(requests):
                 # print(json.dumps(extracted_info, ensure_ascii=False, indent=4))
         except Exception as e:
             print(f"오류 발생: {e}")
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from elasticsearch import Elasticsearch
+import json
+
+@csrf_exempt
+def page_save(request):
+    if request.method == 'POST':
+        try:
+            # 요청에서 문자열 데이터를 가져옴
+            raw_text = request.body.decode('utf-8')
+
+            # Elasticsearch 클라이언트 설정
+            es = Elasticsearch(['http://localhost:9200'])  # Elasticsearch 서버 주소
+            
+            # Elasticsearch에 데이터 업로드
+            # 데이터는 index라는 메서드를 통해 업로드됩니다.
+            res = es.index(index='pages', body={'content': raw_text})
+
+            # 성공적으로 업로드되면 응답 반환
+            return JsonResponse({'status': 'success', 'data': res}, status=200)
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+    else:
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+
+
+
+
+        // 예시: JavaScript를 사용한 POST 요청
+fetch('/pagesave/', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'text/plain',
+    },
+    body: "여기에 전송할 문자열 데이터를 입력하세요.",
+})
+.then(response => response.json())
+.then(data => {
+    if (data.status === 'success') {
+        console.log('데이터 업로드 성공:', data);
+    } else {
+        console.error('에러 발생:', data.message);
+    }
+})
+.catch((error) => {
+    console.error('요청 실패:', error);
+});
