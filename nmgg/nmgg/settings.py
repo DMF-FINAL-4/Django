@@ -1,14 +1,14 @@
 
 # api 키 가져오기
-# API_KEY = os.environ.get('MY_API_KEY')
 import os
 from dotenv import load_dotenv
-load_dotenv()
+load_dotenv(override=True)
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+# print(f"Loaded OPENAI_API_KEY: {OPENAI_API_KEY}")
 
 # 엘라스틱 서치 주소
 from elasticsearch import Elasticsearch
-es = Elasticsearch(['http://localhost:9200'])
+ELASTICSEARCH = Elasticsearch(['http://localhost:9200'])
 
 """
 Django settings for nmgg project.

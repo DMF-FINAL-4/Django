@@ -1,5 +1,7 @@
 # views의 가독성 향상과 함수 재사용을 위한 유틸 함수, 클래스 파일입니다. 
 
+from django.conf import settings
+
 from bs4 import BeautifulSoup
 import os
 import argparse
@@ -8,14 +10,24 @@ import json
 from dotenv import load_dotenv
 
 class HTMLCleanerAndGPTExtractor:
+
+
+
+
     def __init__(self, openai_api_key):
         """
         초기화 메서드로, API 키를 초기화합니다.
         Args:
             openai_api_key (str): OpenAI API 키
         """
-        self.api_key = openai_api_key
-        openai.api_key = self.api_key
+        self.openai_api_key = openai_api_key
+        # OpenAI API 키 설정
+        openai.api_key = self.openai_api_key
+
+        
+
+        # 디버깅용 로그
+        # print(f"OpenAI API Key 설정됨: {openai.api_key}")
 
     def clean_html_style_tags(self, raw_html_content):
         """
@@ -52,6 +64,12 @@ class HTMLCleanerAndGPTExtractor:
         Returns:
             dict: GPT가 추출한 정보
         """
+        # 디버깅용 로그
+        # print(f" 함수에 들어와서 현재 OpenAI API Key: {openai.api_key}")
+        # 키없음 오류를 해결하기 위해 함수 내부에 명시
+        # openai.api_key = self.openai_api_key
+        # print(f" 함수에 들어와서 재지정 현재 OpenAI API Key: {openai.api_key}")
+
         # 프롬프트 정의
         prompt = f"""
         아래는 정제된 웹 페이지의 HTML입니다. 이 HTML에서 다음 정보를 추출하여 JSON 형식으로 반환하세요:
