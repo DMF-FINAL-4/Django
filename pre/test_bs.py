@@ -37,8 +37,8 @@ def clean_html_preserve_structure(html_content):
     return cleaned_html
 
 if __name__ == "__main__":
-    # 예제 HTML 콘텐츠
 
+# 변수 html_content 에 직접 html넣는 방법 찾기
     response = requests.get(url)
     html_content = response.text
     cleaned_html = clean_html_preserve_structure(html_content)
