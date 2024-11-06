@@ -4,8 +4,6 @@ import openai
 import json
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
-import requests
-from test_bs import clean_html_preserve_structure
 
 def extract_information_with_gpt(cleaned_html, api_key):
     """
@@ -23,7 +21,7 @@ def extract_information_with_gpt(cleaned_html, api_key):
     prompt = f"""
     아래는 정제된 웹 페이지의 HTML입니다. 이 HTML에서 다음 정보를 추출하여 JSON 형식으로 반환하세요:
     - 접근권한 (access_permission) : 만약 접근에 제한이 있는 페이지로 확인된다면 'HTTP 상태 코드', '없는 페이지', '로그인 필요' 등의 적절한 항목을 출력. 문제가 없다면 '정상'을 출력
-    - 파비콘(favicon) : 파비콘의 호스트 도메인을 포함한 전체 경로를 저장 
+    - 파비콘(favicon) : 파비콘의 호스트 도메인을 포함한 전체 경로를 저장, 민약 여러개라면 가장 큰 이미지의 것을 1개만 저장
     - 호스트 도메인 (host_domain) :
     - 호스트 이름 (host_name) : 호스트의 이름을 한글로 출력, 한글이 없다면 영어로 출력 (예시: 네이버 뉴스, 페이스북, 위키백과)
     - 대체 url (alternate_url) : Canonical URL 또는 Open Graph URL이 존재 한다면 이곳에 표시

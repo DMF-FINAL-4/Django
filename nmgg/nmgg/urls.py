@@ -19,4 +19,5 @@ from django.urls import path
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('page_save/', include('page_save.urls'), name='page_save'),
 ]

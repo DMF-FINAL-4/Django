@@ -7,7 +7,7 @@ from selenium.webdriver.chrome.options import Options
 # Chrome 옵션 설정 (Headless 모드)
 chrome_options = Options()
 # chrome_options.add_argument("--headless")  # 브라우저 창을 띄우지 않음
-chrome_options.add_argument("--disable-gpu")  # GPU 비활성화 (Windows 환경에서 필요할 수 있음)
+# chrome_options.add_argument("--disable-gpu")  # GPU 비활성화 (Windows 환경에서 필요할 수 있음)
 
 # ChromeDriver 경로 설정
 service = Service('C:/webdrivers/chrome-win64/chrome.exe')
