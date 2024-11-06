@@ -27,6 +27,13 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+# api 키 가져오기
+# API_KEY = os.environ.get('MY_API_KEY')
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+openai_api_key = os.getenv('OPENAI_API_KEY')
 
 # Application definition
 

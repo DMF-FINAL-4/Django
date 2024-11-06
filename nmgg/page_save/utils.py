@@ -8,13 +8,13 @@ import json
 from dotenv import load_dotenv
 
 class HTML_cleaner_and_GPT_extractor:
-    def __init__(self, api_key):
+    def __init__(self, openai_api_key):
         """
         초기화 메서드로, API 키를 초기화합니다.
         Args:
-            api_key (str): OpenAI API 키
+            openai_api_key (str): OpenAI API 키
         """
-        self.api_key = api_key
+        self.api_key = openai_api_key
         openai.api_key = self.api_key
 
     def clean_html_style_tags(self, raw_html_content):
