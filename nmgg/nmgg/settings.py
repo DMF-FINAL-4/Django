@@ -21,10 +21,21 @@ ELASTICSEARCH = Elasticsearch(
     ['https://localhost:9200'],
     ca_certs=CA_CERT_PATH,  # 인증서 파일 경로 지정
     verify_certs=True,  # 인증서 검증 활성화
+    # http_auth=('admin', 'admin1234'),  # 기본 인증 정보가 필요한 경우
+
     timeout=30,  # 요청 타임아웃 설정
     max_retries=10,  # 최대 재시도 횟수
     retry_on_timeout=True  # 타임아웃 발생 시 재시도
 )
+# # 테스트용
+# ELASTICSEARCH = Elasticsearch(
+#     ['https://localhost:9200'],
+#     timeout=30,  # 요청 타임아웃 설정
+#     max_retries=10,  # 최대 재시도 횟수
+#     retry_on_timeout=True,  # 타임아웃 발생 시 재시도
+#     verify_certs=False,  # 인증서 검증 비활성화
+#     ssl_show_warn=False,  # 인증서 경고 비활성화
+# )
 
 """
 Django settings for nmgg project.

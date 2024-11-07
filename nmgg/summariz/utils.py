@@ -9,6 +9,8 @@ import openai
 import json
 from dotenv import load_dotenv
 
+
+
 class HTMLCleanerAndGPTExtractor:
 
     def __init__(self, openai_api_key):
@@ -127,35 +129,35 @@ class HTMLCleanerAndGPTExtractor:
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.0,
-                max_tokens=10000
+                max_tokens=10000,
+                timeout=30
             )
-
-
-            # 응답 내용을 strip 
             extracted_info = response['choices'][0]['message']['content'].strip()
-            # json 형식 검증
+            print("GPT 응답 성공:", extracted_info)
+
+            # JSON 변환 및 검증
             try:
-                processed_data = json.dumps(processed_data)  # 데이터가 JSON 형식으로 직렬화될 수 있는지 확인
+                processed_data = json.loads(extracted_info)  # 응답을 JSON으로 변환
                 print("JSON 데이터 형식 확인 성공:")
-            except (TypeError, ValueError) as e:
+            except json.JSONDecodeError as e:
                 print("GPT 응답이 유효한 JSON 형식이 아닙니다. 오류:", str(e))
-                return JsonResponse({'status': 'error', 'message': 'Invalid JSON format'}, status=400)
+                raise ValueError("Invalid JSON format")
 
-
-
-
-            print("gpt 반환")
-            # 처리된 json을 반환
-            return json.loads(extracted_info)
+            # 처리된 JSON 반환
+            return processed_data
 
         except openai.error.AuthenticationError:
-            raise ValueError("인증 실패: API 키가 잘못되었거나 유효하지 않습니다.")
+            print("인증 실패: 유효하지 않은 API Key입니다.")
+            raise ValueError("인증 실패: API Key가 유효하지 않습니다.")
+        except openai.error.RateLimitError:
+            print("요청이 너무 많습니다. API Rate Limit 초과.")
+            raise RuntimeError("API Rate Limit 초과: 나중에 다시 시도하세요.")
         except openai.error.OpenAIError as e:
-            raise RuntimeError(f"OpenAI API 오류 발생: {e}")
-        except json.JSONDecodeError:
-            raise ValueError("GPT 응답을 JSON으로 변환하는 중 오류 발생.")
+            print(f"OpenAI API 오류 발생: {str(e)}")
+            raise RuntimeError(f"OpenAI API 오류 발생: {str(e)}")
         except Exception as e:
-            raise RuntimeError(f"예상치 못한 오류 발생: {e}")
+            print(f"알 수 없는 오류 발생: {str(e)}")
+            raise RuntimeError(f"알 수 없는 오류 발생: {str(e)}")
 
     def process_url(self, url):
         """

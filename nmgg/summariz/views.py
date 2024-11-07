@@ -8,44 +8,107 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 import json
 
+from elasticsearch import Elasticsearch, TransportError, ConnectionError, NotFoundError
+
+# @csrf_exempt
+# def process_new_page(request):
+#     if request.method == 'POST':
+#         try:
+#             # request.body 문자열로 디코딩
+#             raw_html = request.body.decode('utf-8')
+
+#             # API 키 등록
+#             openai_api_key = settings.OPENAI_API_KEY
+#             if not openai_api_key:
+#                 return JsonResponse({'error': 'API key not found'}, status=500)
+
+#             # 클래스 인스턴스화
+#             processer = HTMLCleanerAndGPTExtractor(openai_api_key)
+
+#              # HTML 프로세스
+#             processed_data = processer.process_raw_html(raw_html)
+
+#             # Elasticsearch 클라이언트 초기화
+#             es = settings.ELASTICSEARCH
+#             if not es:
+#                 return JsonResponse({'error': 'Elasticsearch client not configured'}, status=500)
+#             print("업로드 시작")
+#             # Elasticsearch에 데이터 업로드
+#             try:
+#                 res = es.index(index='pages', body=processed_data)
+#                 # 성공적으로 업로드되면 응답 반환
+#                 print("업로드 성공")
+#                 return JsonResponse({'status': 'success', 'data': res}, status=200)
+#             except Exception as e:
+#                 print("업로드 실패")
+#                 return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+#         except Exception as e:
+#             # 다른 모든 예외 처리
+#             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+#     # POST 외의 메서드의 경우
+#     else:
+#         return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+
+
+print(settings.CA_CERT_PATH)
+
 
 @csrf_exempt
 def process_new_page(request):
     if request.method == 'POST':
         try:
-            # request.body 문자열로 디코딩
-            raw_html = request.body.decode('utf-8')
-
-            # API 키 등록
-            openai_api_key = settings.OPENAI_API_KEY
-            if not openai_api_key:
-                return JsonResponse({'error': 'API key not found'}, status=500)
-
-            # 클래스 인스턴스화
-            processer = HTMLCleanerAndGPTExtractor(openai_api_key)
-
-             # HTML 프로세스
-            processed_data = processer.process_raw_html(raw_html)
-
             # Elasticsearch 클라이언트 초기화
+            print("Elasticsearch 클라이언트 초기화 시도")
             es = settings.ELASTICSEARCH
             if not es:
+                print("Elasticsearch 클라이언트가 설정되지 않음")
                 return JsonResponse({'error': 'Elasticsearch client not configured'}, status=500)
-            print("업로드 시작")
-            # Elasticsearch에 데이터 업로드
+
+            # API 키 등록 확인
+            print("API 키 가져오기 시도")
+            openai_api_key = settings.OPENAI_API_KEY
+            if not openai_api_key:
+                print("API 키가 설정되지 않았음")
+                return JsonResponse({'error': 'API key not found'}, status=500)
+
+            # HTMLCleanerAndGPTExtractor 클래스 인스턴스화
+            print("HTMLCleanerAndGPTExtractor 인스턴스화 시도")
+            processer = HTMLCleanerAndGPTExtractor(openai_api_key)
+
+            # HTML 프로세스
+            print("HTML 프로세스 시도")
+            raw_html = request.body.decode('utf-8')
+
+            try:
+                # HTML을 처리하는 과정에서 발생하는 오류를 처리
+                processed_data = processer.process_raw_html(raw_html)
+                print("HTML 프로세스 성공:", processed_data)
+            except Exception as e:
+                # HTML 처리 중 오류 발생 시 처리
+                print(f"HTML 처리 중 오류 발생: {str(e)}")
+                return JsonResponse({'status': 'error', 'message': 'Failed to process HTML'}, status=400)
+
+            # Elasticsearch에 데이터 업로드 시도
+            print("Elasticsearch에 데이터 업로드 시도")
             try:
                 res = es.index(index='pages', body=processed_data)
-                # 성공적으로 업로드되면 응답 반환
-                print("업로드 성공")
+                print(f"Elasticsearch 업로드 성공: {res}")
                 return JsonResponse({'status': 'success', 'data': res}, status=200)
+            except (TransportError, ConnectionError, NotFoundError) as e:
+                print(f"Elasticsearch 업로드 오류 발생: {str(e)}")
+                return JsonResponse({'status': 'error', 'message': 'Elasticsearch 업로드 중 오류 발생: 연결 문제'}, status=500)
             except Exception as e:
-                print("업로드 실패")
-                return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+                print(f"Elasticsearch 업로드 중 알 수 없는 오류 발생: {str(e)}")
+                return JsonResponse({'status': 'error', 'message': f'알 수 없는 오류 발생: {str(e)}'}, status=500)
 
         except Exception as e:
             # 다른 모든 예외 처리
+            print(f"처리 중 오류 발생: {str(e)}")
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
-    # POST 외의 메서드의 경우
+    # 잘못된 메서드의 경우
     else:
+        print("POST 이외의 요청 수신")
         return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
