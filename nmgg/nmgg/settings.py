@@ -10,6 +10,32 @@ OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 from elasticsearch import Elasticsearch
 ELASTICSEARCH = Elasticsearch(['http://localhost:9200'])
 
+# # 나의 로그 설정 base dir 문제 발생
+# import os
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#     'handlers': {
+#         'file': {
+#             'level': 'DEBUG',
+#             'class': 'logging.FileHandler',
+#             'filename': os.path.join(BASE_DIR, 'debug.log'),
+#         },
+#     },
+#     'loggers': {
+#         'django': {
+#             'handlers': ['file'],
+#             'level': 'DEBUG',
+#             'propagate': True,
+#         },
+#         'my_logger': {
+#             'handlers': ['file'],
+#             'level': 'DEBUG',
+#             'propagate': True,
+#         },
+#     },
+# }
+
 """
 Django settings for nmgg project.
 

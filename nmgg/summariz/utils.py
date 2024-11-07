@@ -11,9 +11,6 @@ from dotenv import load_dotenv
 
 class HTMLCleanerAndGPTExtractor:
 
-
-
-
     def __init__(self, openai_api_key):
         """
         초기화 메서드로, API 키를 초기화합니다.
@@ -23,8 +20,6 @@ class HTMLCleanerAndGPTExtractor:
         self.openai_api_key = openai_api_key
         # OpenAI API 키 설정
         openai.api_key = self.openai_api_key
-
-        
 
         # 디버깅용 로그
         # print(f"OpenAI API Key 설정됨: {openai.api_key}")
@@ -72,7 +67,7 @@ class HTMLCleanerAndGPTExtractor:
 
         # 프롬프트 정의
         prompt = f"""
-        아래는 정제된 웹 페이지의 HTML입니다. 이 HTML에서 다음 정보를 추출하여 JSON 형식으로 반환하세요:
+        아래는 정제된 웹 페이지의 HTML입니다. 이 HTML에서 다음 정보를 추출하여 이 HTML에서 다음 정보를 꼭 **유효한 JSON 형식으로만 반환**하세요. 다른 텍스트나 설명은 포함하지 마세요.:
         - 접근권한 (access_permission) : 만약 접근에 제한이 있는 페이지로 확인된다면 'HTTP 상태 코드', '없는 페이지', '로그인 필요' 등의 적절한 항목을 출력. 문제가 없다면 '정상'을 출력
         - 파비콘(favicon) : 파비콘의 호스트 도메인을 포함한 전체 경로를 저장, 민약 여러개라면 가장 큰 이미지의 것을 1개만 저장
         - 호스트 도메인 (host_domain) :
@@ -122,8 +117,6 @@ class HTMLCleanerAndGPTExtractor:
             "file_download_links": {{"캡션1 | 10MB": "https://example.com/image1.jpg", "캡션2 | 1.1GB": "https://example.com/image2.jpg" }},
             "content_length": "MM"
         }}
-
-        모든 응답은 유효한 JSON 형식이어야 하며, 추가적인 텍스트는 포함하지 마세요.
         """
         
         try:
@@ -136,7 +129,16 @@ class HTMLCleanerAndGPTExtractor:
                 temperature=0.0,
                 max_tokens=10000
             )
+            
+            # 응답 내용을 strip 
             extracted_info = response['choices'][0]['message']['content'].strip()
+            # json 형식 검증
+            if extracted_info.startswith("{") and extracted_info.endswith("}"):
+                return json.loads(extracted_info)
+            else:
+                raise ValueError("GPT 응답이 유효한 JSON 형식이 아닙니다.")
+
+            # 처리된 json을 반환
             return json.loads(extracted_info)
 
         except openai.error.AuthenticationError:
