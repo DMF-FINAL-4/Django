@@ -8,7 +8,12 @@ OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
 # 엘라스틱 서치 주소
 from elasticsearch import Elasticsearch
-ELASTICSEARCH = Elasticsearch(['http://localhost:9200'])
+ELASTICSEARCH = Elasticsearch(
+    ['http://localhost:9200'],
+    timeout=30,  # 연결 타임아웃 설정
+    max_retries=10,  # 최대 재시도 횟수
+    retry_on_timeout=True  # 타임아웃 발생 시 재시도
+)
 
 # # 나의 로그 설정 base dir 문제 발생
 # import os
