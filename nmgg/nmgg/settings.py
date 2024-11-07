@@ -1,4 +1,9 @@
 
+# BASE_DIR 설정
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+
 # api 키 가져오기
 import os
 from dotenv import load_dotenv
@@ -8,38 +13,18 @@ OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
 # 엘라스틱 서치 주소
 from elasticsearch import Elasticsearch
+
+CA_CERT_PATH = os.path.join(BASE_DIR, 'certs', 'http_ca.crt')
+
+# 인증서를 사용하는 Elasticsearch 클라이언트 생성
 ELASTICSEARCH = Elasticsearch(
-    ['http://localhost:9200'],
-    timeout=30,  # 연결 타임아웃 설정
+    ['https://localhost:9200'],
+    ca_certs=CA_CERT_PATH,  # 인증서 파일 경로 지정
+    verify_certs=True,  # 인증서 검증 활성화
+    timeout=30,  # 요청 타임아웃 설정
     max_retries=10,  # 최대 재시도 횟수
     retry_on_timeout=True  # 타임아웃 발생 시 재시도
 )
-
-# # 나의 로그 설정 base dir 문제 발생
-# import os
-# LOGGING = {
-#     'version': 1,
-#     'disable_existing_loggers': False,
-#     'handlers': {
-#         'file': {
-#             'level': 'DEBUG',
-#             'class': 'logging.FileHandler',
-#             'filename': os.path.join(BASE_DIR, 'debug.log'),
-#         },
-#     },
-#     'loggers': {
-#         'django': {
-#             'handlers': ['file'],
-#             'level': 'DEBUG',
-#             'propagate': True,
-#         },
-#         'my_logger': {
-#             'handlers': ['file'],
-#             'level': 'DEBUG',
-#             'propagate': True,
-#         },
-#     },
-# }
 
 """
 Django settings for nmgg project.

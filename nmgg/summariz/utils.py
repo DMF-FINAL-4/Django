@@ -118,7 +118,7 @@ class HTMLCleanerAndGPTExtractor:
             "content_length": "MM"
         }}
         """
-        
+        print("gpt 시작")
         try:
             response = openai.ChatCompletion.create(
                 model="gpt-4o-mini",
@@ -129,15 +129,22 @@ class HTMLCleanerAndGPTExtractor:
                 temperature=0.0,
                 max_tokens=10000
             )
-            
+
+
             # 응답 내용을 strip 
             extracted_info = response['choices'][0]['message']['content'].strip()
             # json 형식 검증
-            if extracted_info.startswith("{") and extracted_info.endswith("}"):
-                return json.loads(extracted_info)
-            else:
-                raise ValueError("GPT 응답이 유효한 JSON 형식이 아닙니다.")
+            try:
+                processed_data = json.dumps(processed_data)  # 데이터가 JSON 형식으로 직렬화될 수 있는지 확인
+                print("JSON 데이터 형식 확인 성공:")
+            except (TypeError, ValueError) as e:
+                print("GPT 응답이 유효한 JSON 형식이 아닙니다. 오류:", str(e))
+                return JsonResponse({'status': 'error', 'message': 'Invalid JSON format'}, status=400)
 
+
+
+
+            print("gpt 반환")
             # 처리된 json을 반환
             return json.loads(extracted_info)
 

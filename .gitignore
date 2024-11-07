@@ -252,5 +252,7 @@ $RECYCLE.BIN/
 # 환경변수 추가
 .env
 
+# 인증서
+certs/
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,windows,macos,django
