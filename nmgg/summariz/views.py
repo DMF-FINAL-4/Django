@@ -94,14 +94,20 @@ def process_new_page(request):
             print("Elasticsearch에 데이터 업로드 시도")
             try:
                 res = es.index(index='pages', body=processed_data)
-                print(f"Elasticsearch 업로드 성공: {res}")
-                return JsonResponse({'status': 'success', 'data': res}, status=200)
-            except (TransportError, ConnectionError, NotFoundError) as e:
-                print(f"Elasticsearch 업로드 오류 발생: {str(e)}")
-                return JsonResponse({'status': 'error', 'message': 'Elasticsearch 업로드 중 오류 발생: 연결 문제'}, status=500)
+                
+
+                # 응답을 딕셔너리 형식으로 변환
+                if hasattr(res, 'to_dict'):
+                    res_dict = res.to_dict()  # to_dict() 메서드를 사용하여 변환
+                else:
+                    res_dict = dict(res)  # 이미 딕셔너리인 경우 그대로 사용
+
+                print("Elasticsearch 업로드 성공:", res_dict)
+                return JsonResponse({'status': 'success', 'data': res_dict}, status=200)
             except Exception as e:
-                print(f"Elasticsearch 업로드 중 알 수 없는 오류 발생: {str(e)}")
-                return JsonResponse({'status': 'error', 'message': f'알 수 없는 오류 발생: {str(e)}'}, status=500)
+                print("Elasticsearch 업로드 중 알 수 없는 오류 발생:", str(e))
+                return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
 
         except Exception as e:
             # 다른 모든 예외 처리
@@ -112,3 +118,7 @@ def process_new_page(request):
     else:
         print("POST 이외의 요청 수신")
         return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+
+
+
+

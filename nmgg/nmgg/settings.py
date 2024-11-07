@@ -21,7 +21,7 @@ ELASTICSEARCH = Elasticsearch(
     ['https://localhost:9200'],
     ca_certs=CA_CERT_PATH,  # 인증서 파일 경로 지정
     verify_certs=True,  # 인증서 검증 활성화
-    # http_auth=('admin', 'admin1234'),  # 기본 인증 정보가 필요한 경우
+    http_auth=('admin', 'admin1234'),  # 기본 인증 정보가 필요한 경우
 
     timeout=30,  # 요청 타임아웃 설정
     max_retries=10,  # 최대 재시도 횟수

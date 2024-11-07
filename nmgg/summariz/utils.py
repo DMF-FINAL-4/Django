@@ -91,7 +91,6 @@ class HTMLCleanerAndGPTExtractor:
         - 콘텐츠의 길이(content_length) : 콘텐츠를 읽는데 걸리는 시간을 예측 1분 단위로
 
 
-
         HTML:
         \"\"\"
         {cleaned_html}
