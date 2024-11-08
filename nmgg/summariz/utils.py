@@ -77,7 +77,7 @@ class HTMLCleanerAndGPTExtractor:
         - 대체 url (alternate_url) : Canonical URL 또는 Open Graph URL이 존재 한다면 이곳에 표시
         - 제목 (title) : 각종 정보를 종합한 제목 (예시: '동아일보｜[이철희 칼럼] 형제애로 마련한 400억…감사 전한 튀르키예')
         - 작성자 (author) : 본문의 작성자
-        - 작성일 (date) : 페이지의 작성일
+        - 작성일 (date) : 페이지의 작성일 yyyy-MM-dd
         - 본문 (content) : 명백한 오타 수정을 제외한 텍스트 외곡이 없으며, 표 내부의 내용 등을 포함한 누락 없는 본문
         - 짧은 요약 (short_summary) : 본문을 20자에서 90자로 사이로 요약
         - 긴 요약 (long_summary) : 본문을 200자에서 400자 사이로 요약
@@ -105,18 +105,18 @@ class HTMLCleanerAndGPTExtractor:
             "alternate_url": "https://www.example.com/page-url",
             "title": "제목",
             "author": "작성자",
-            "date": "YYYY-MM-DD",
+            "date": "yyyy-MM-dd",
             "content": "본문 내용",
             "short_summary": "본문을 20자에서 90자로 요약한 내용",
             "long_summary": "본문을 200자에서 400자로 요약한 내용",
             "keywords": ["키워드1", "키워드2"],
             "category_keywords": ["블로그", "카페"],
-            "comments": ["작성자1 | 댓글내용1 | YYYY-MM-DD", "작성자2 | 댓글내용2 | YYYY-MM-DD"],
+            "comments": ["작성자1 | 댓글내용1 | yyyy-MM-dd", "작성자2 | 댓글내용2 | yyyyy-MM-dd"],
             "image_links": {{"이미지캡션1": "https://example.com/image1.jpg", "이미지캡션2": "https://example.com/image2.jpg" }},
             "links": {{"캡션1": "https://example.com/image1.jpg", "캡션2": "https://example.com/image2.jpg" }},
             "media_links": {{"캡션1": "https://example.com/image1.jpg", "캡션2": "https://example.com/image2.jpg" }},
             "file_download_links": {{"캡션1 | 10MB": "https://example.com/image1.jpg", "캡션2 | 1.1GB": "https://example.com/image2.jpg" }},
-            "content_length": "MM"
+            "content_length": "m"
         }}
         """
         print("gpt 시작")
@@ -136,15 +136,22 @@ class HTMLCleanerAndGPTExtractor:
 
             # 백틱 제거
             extracted_info = self.remove_backticks(extracted_info)
-            print("백틱 제거 후 응답:", extracted_info)
+            print("백틱 제거")
 
-            # JSON 변환 및 검증
             try:
                 processed_data = json.loads(extracted_info)  # 응답을 JSON으로 변환
                 print("JSON 데이터 형식 확인 성공:")
             except json.JSONDecodeError as e:
                 print("GPT 응답이 유효한 JSON 형식이 아닙니다. 오류:", str(e))
                 raise ValueError("Invalid JSON format")
+
+            # date 필드가 없을 경우 기본값 설정
+            if 'date' in extracted_info:
+                if not re.match(r'\d{4}-\d{2}-\d{2}', extracted_info['date']):
+                    extracted_info['date'] = '0001-01-01'
+
+            # JSON 변환 및 검증
+
 
             # 처리된 JSON 반환
             return processed_data
