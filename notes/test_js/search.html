@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+            // 테스트용 검색 스크립트
+        async function testSearch() {
+            // Django 서버 주소 및 검색 엔드포인트 URL
+            const url = "http://127.0.0.1:8000/page_save/search/";
+            
+            // 검색어와 검색 타입을 포함한 데이터 구성
+            const data = {
+                query: "윤석열 대통령"
+            };
+            
+            try {
+                // POST 요청을 보내 검색 실행
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                // 서버 응답 확인
+                if (response.ok) {
+                    const jsonResponse = await response.json();
+                    const results = jsonResponse.results || [];
+                    console.log("검색 결과:");
+                    results.forEach(result => {
+                        console.log(JSON.stringify(result, null, 4));
+                    });
+                } else {
+                    console.error(`오류 발생: 상태 코드 ${response.status}`);
+                    const errorResponse = await response.json();
+                    console.error(errorResponse);
+                }
+            } catch (error) {
+                console.error(`요청 실패: ${error}`);
+            }
+        }
+
+        // 검색 테스트 실행
+        testSearch();
+
+    </script>
+</body>
+</html>

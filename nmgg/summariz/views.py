@@ -135,3 +135,65 @@ def process_new_urls(request):
     # 잘못된 메서드의 경우
     else:
         return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+
+
+
+
+@csrf_exempt
+def process_search(request):
+    if request.method == 'POST':
+        try:
+            # 요청에서 검색어를 가져옴
+            request_data = json.loads(request.body)
+            query = request_data.get('query', '')
+
+            print('검색어 가져옴')
+
+            if not query:
+                return JsonResponse({'error': '검색어가 제공되지 않았습니다.'}, status=400)
+
+            # # Elasticsearch 클라이언트 초기화
+            # es = Elasticsearch(
+            #     hosts=[{"host": "localhost", "port": 9200}],
+            #     use_ssl=True,
+            #     verify_certs=False
+            # )
+
+            # 검색 쿼리 구성
+            body = {
+                "query": {
+                    "match": {
+                        "content": query
+                    }
+                }
+            }
+            
+            es = settings.ELASTICSEARCH
+            print('검색 요청 시작')
+            # Elasticsearch에 검색 요청
+            res = es.search(index="pages", body=body)
+            hits = res.get('hits', {}).get('hits', [])
+            
+            print('결과 정제 시작')
+            # 검색 결과 정제
+            results = []
+            for hit in hits:
+                source = hit.get('_source', {})
+                results.append({
+                    "title": source.get("title"),
+                    "author": source.get("author"),
+                    "date": source.get("date"),
+                    # "content": source.get("content"),
+                    "url": source.get("alternate_url")
+                })
+            
+            print(results)
+
+            return JsonResponse({"results": results}, status=200)
+
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'JSON 형식이 잘못되었습니다.'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    else:
+        return JsonResponse({'error': 'Invalid request method'}, status=405)
