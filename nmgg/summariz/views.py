@@ -75,3 +75,56 @@ def process_new_page(request):
 
 
 
+from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
+from django.http import JsonResponse
+import requests
+from .utils import HTMLCleanerAndGPTExtractor
+import json
+
+@csrf_exempt
+def process_new_urls(request):
+    if request.method == 'POST':
+        es = settings.ELASTICSEARCH
+        # API 키 등록
+        openai_api_key = settings.OPENAI_API_KEY
+        if not openai_api_key:
+            return JsonResponse({'error': 'API key not found'}, status=500)
+
+        # URL 가져오기
+        try:
+            body = json.loads(request.body)
+            url = body.get('url')
+            if not url:
+                return JsonResponse({'status': 'error', 'message': 'No URL provided'}, status=400)
+        except json.JSONDecodeError:
+            return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
+
+        # HTML 콘텐츠 가져오기
+        try:
+            response = requests.get(url)
+            response.raise_for_status()  # 요청에 오류가 있을 경우 예외 발생
+            raw_html = response.text
+        except requests.exceptions.RequestException as e:
+            return JsonResponse({'status': 'error', 'message': f'Failed to retrieve HTML from URL: {str(e)}'}, status=400)
+
+        # 클래스 인스턴스화 및 HTML 정제 및 데이터 추출
+        processer = HTMLCleanerAndGPTExtractor(openai_api_key)
+        try:
+            processed_data = processer.process_raw_html(raw_html)
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+        # Elasticsearch에 데이터 업로드
+        try:
+            res = es.index(index='pages', body=processed_data)
+            # 성공 시 응답 반환
+            print("Elasticsearch 업로드 성공:", res)
+            return JsonResponse({'status': 'success', 'data': res}, status=200)
+        except Exception as e:
+            print("Elasticsearch 업로드 중 알 수 없는 오류 발생:", str(e))
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+    # 잘못된 메서드의 경우
+    else:
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)

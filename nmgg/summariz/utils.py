@@ -69,7 +69,7 @@ class HTMLCleanerAndGPTExtractor:
 
         # 프롬프트 정의
         prompt = f"""
-        아래는 정제된 웹 페이지의 HTML입니다. 이 HTML에서 다음 정보를 추출하여 이 HTML에서 다음 정보를 꼭 **유효한 JSON 형식으로만 반환**하세요. 다른 텍스트나 설명은 포함하지 마세요.:
+        아래는 정제된 웹 페이지의 HTML입니다. 이 HTML에서 다음 정보를 추출하여 이 HTML에서 다음 정보를 꼭 **유효한 JSON 형식으로만 백틱 없이 반환하세요**. 다른 텍스트나 설명은 포함하지 마세요.:
         - 접근권한 (access_permission) : 만약 접근에 제한이 있는 페이지로 확인된다면 'HTTP 상태 코드', '없는 페이지', '로그인 필요' 등의 적절한 항목을 출력. 문제가 없다면 '정상'을 출력
         - 파비콘(favicon) : 파비콘의 호스트 도메인을 포함한 전체 경로를 저장, 민약 여러개라면 가장 큰 이미지의 것을 1개만 저장
         - 호스트 도메인 (host_domain) :
@@ -84,7 +84,7 @@ class HTMLCleanerAndGPTExtractor:
         - 키워드 (keywords) : 본문의 키워드들 내용이 길고 요소가 많다면 키워드들이 아주 많아져도 좋아
         - 유형 키워드 (category_keywords) : 블로그, 카페, 기사, 정보, 사연, 에세이, 영상, 사진, 리뷰, 쇼핑, sns 등 유형이라 할 수 있는 키워드들 풍부하게
         - 댓글 (comments) : 댓글이 있다면 '작성자 | 댓글내용 | 작성시간' 형식으로 저장
-        - 이미지 링크 (image_links) : 주요 이미지들의 링크 주소 {{"이미지캡션" : "이미지링크url"}} 딕셔너리 형식으로 저장
+        - 이미지 링크 (image_links) : 주요 이미지를 모두 링크 주소 {{"이미지캡션" : "이미지링크url"}} 딕셔너리 형식으로 저장
         - 링크(links) : 본문 내에 주요한 외부 또는 내부 링크들이 있을경우 {{"캡션" : "링크url"}} 딕셔너리 형식으로 저장
         - 비디오 및 오디오(media) : 본문 내에 미디어가 있을경우 {{"캡션" : "링크url"}} 딕셔너리 형식으로 저장
         - 파일 다운로드 링크(file_download_links) : 주요한 PDF, 이미지, 문서 등의 다운로드 링크가 있을경우 {{"파일제목 | 파일 크기": "링크url"}} 딕셔너리 형식으로 저장
@@ -124,7 +124,7 @@ class HTMLCleanerAndGPTExtractor:
             response = openai.ChatCompletion.create(
                 model="gpt-4o-mini",
                 messages=[
-                    {"role": "system", "content": "당신은 정보를 추출하는 어시스턴트입니다."},
+                    {"role": "system", "content": "당신은 정보를 추출하는 어시스턴트입니다. 규칙에 따라 유효한 JSON 형식으로만 백틱 없이 반환하세요."},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.0,
@@ -133,6 +133,10 @@ class HTMLCleanerAndGPTExtractor:
             )
             extracted_info = response['choices'][0]['message']['content'].strip()
             print("GPT 응답 성공:", extracted_info)
+
+            # 백틱 제거
+            extracted_info = self.remove_backticks(extracted_info)
+            print("백틱 제거 후 응답:", extracted_info)
 
             # JSON 변환 및 검증
             try:
@@ -187,3 +191,16 @@ class HTMLCleanerAndGPTExtractor:
         cleaned_html = self.clean_html_style_tags(raw_html)
         extracted_info = self.extract_information_with_gpt(cleaned_html)
         return extracted_info
+
+
+    def remove_backticks(self, text):
+        """
+        문자열의 앞뒤에 있는 백틱(```)을 제거합니다.
+        Args:
+            text (str): 처리할 문자열
+        Returns:
+            str: 백틱이 제거된 문자열
+        """
+        if text.startswith('```') and text.endswith('```'):
+            return text[3:-3].strip()
+        return text

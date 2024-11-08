@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Document</title>
+</head>
+<body>
+	<script>
+	fetch('http://127.0.0.1:8000/page_save/new_urls/', {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify({ url: 'https://n.news.naver.com/mnews/article/011/0004412785' })  // 전송할 URL
+	})
+	.then(response => response.json())
+	.then(data => {
+		if (data.status === 'success') {
+			console.log('데이터 업로드 성공:', data.data);
+		} else {
+			console.error('에러 발생:', data.message);
+		}
+	})
+	.catch((error) => {
+		console.error('요청 실패:', error);
+	});
+	</script>
+</body>
+</html>
