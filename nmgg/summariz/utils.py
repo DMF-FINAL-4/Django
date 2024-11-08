@@ -9,7 +9,7 @@ import openai
 import json
 from dotenv import load_dotenv
 
-
+import re
 
 class HTMLCleanerAndGPTExtractor:
 
@@ -146,9 +146,9 @@ class HTMLCleanerAndGPTExtractor:
                 raise ValueError("Invalid JSON format")
 
             # date 필드가 없을 경우 기본값 설정
-            if 'date' in extracted_info:
-                if not re.match(r'\d{4}-\d{2}-\d{2}', extracted_info['date']):
-                    extracted_info['date'] = '0001-01-01'
+            if 'date' in processed_data:
+                if not re.match(r'\d{4}-\d{2}-\d{2}', processed_data['date']):
+                    processed_data['date'] = '0001-01-01'
 
             # JSON 변환 및 검증
 

@@ -48,7 +48,7 @@ def process_new_page(request):
             # Elasticsearch에 데이터 업로드 시도
             print("Elasticsearch에 데이터 업로드 시도")
             try:
-                res = es.index(index='pages', body=processed_data)
+                res = es.index(index='pages', pipeline='add_created_at', body=processed_data)
 
                 # 응답을 딕셔너리 형식으로 변환
                 if hasattr(res, 'to_dict'):
@@ -115,12 +115,19 @@ def process_new_urls(request):
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
-        # Elasticsearch에 데이터 업로드
+            # Elasticsearch에 데이터 업로드 시도
+            print("Elasticsearch에 데이터 업로드 시도")
         try:
-            res = es.index(index='pages', body=processed_data)
-            # 성공 시 응답 반환
-            print("Elasticsearch 업로드 성공:", res)
-            return JsonResponse({'status': 'success', 'data': res}, status=200)
+            res = es.index(index='pages', pipeline='add_created_at', body=processed_data)
+
+            # 응답을 딕셔너리 형식으로 변환
+            if hasattr(res, 'to_dict'):
+                res_dict = res.to_dict()  # to_dict() 메서드를 사용하여 변환
+            else:
+                res_dict = dict(res)  # 이미 딕셔너리인 경우 그대로 사용
+
+            print("Elasticsearch 업로드 성공:", res_dict)
+            return JsonResponse({'status': 'success', 'data': res_dict}, status=200)
         except Exception as e:
             print("Elasticsearch 업로드 중 알 수 없는 오류 발생:", str(e))
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
