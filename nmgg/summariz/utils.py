@@ -1,39 +1,34 @@
 # views의 가독성 향상과 함수 재사용을 위한 유틸 함수, 클래스 파일입니다. 
 
 from django.conf import settings
+from dotenv import load_dotenv
 
 from bs4 import BeautifulSoup
 import os
 import argparse
 import openai
 import json
-from dotenv import load_dotenv
-
 import re
 
 class HTMLCleanerAndGPTExtractor:
 
-    def __init__(self, openai_api_key):
-        """
-        초기화 메서드로, API 키를 초기화합니다.
-        Args:
-            openai_api_key (str): OpenAI API 키
-        """
-        self.openai_api_key = openai_api_key
-        # OpenAI API 키 설정
-        openai.api_key = self.openai_api_key
 
-        # 디버깅용 로그
+    def __init__(self, openai_api_key):
+        # 초기화 메서드로, API 키를 초기화합니다.
+        self.openai_api_key = openai_api_key
+        openai.api_key = self.openai_api_key
+        # 키 확인
         # print(f"OpenAI API Key 설정됨: {openai.api_key}")
+        print('html 정보 추출 클래스 인스턴스 생성')
+
 
     def clean_html_style_tags(self, raw_html_content):
         """
         HTML 콘텐츠를 정제하여 스타일 및 장식적인 태그와 관련 속성만 제거하고 구조적인 태그는 그대로 유지합니다.
-        Args:
-            raw_html_content (str): 정제할 HTML 콘텐츠
-        Returns:
-            str: 정제된 HTML 콘텐츠
+        Args: raw_html_content (str): 정제할 HTML 콘텐츠
+        Returns: str: 정제된 HTML 콘텐츠
         """
+        print('태그 정돈 시작')
         # BeautifulSoup 객체 생성 (lxml 파서 사용)
         soup = BeautifulSoup(raw_html_content, 'lxml')
         # 제거할 태그 리스트 (스타일 및 장식적인 태그)
@@ -51,22 +46,17 @@ class HTMLCleanerAndGPTExtractor:
                     del tag.attrs[attr]
         # 정제된 HTML 문자열 반환
         cleaned_html = str(soup)
+        print('태그 정돈 완료')
         return cleaned_html
+
 
     def extract_information_with_gpt(self, cleaned_html):
         """
         정제된 HTML을 받아서 특정 정보를 GPT-4 모델로 요약 정리합니다.
-        Args:
-            cleaned_html (str): 정제된 HTML 콘텐츠
-        Returns:
-            dict: GPT가 추출한 정보
+        Args: cleaned_html (str): 정제된 HTML 콘텐츠
+        Returns:dict: GPT가 추출한 정보
         """
-        # 디버깅용 로그
-        # print(f" 함수에 들어와서 현재 OpenAI API Key: {openai.api_key}")
-        # 키없음 오류를 해결하기 위해 함수 내부에 명시
-        # openai.api_key = self.openai_api_key
-        # print(f" 함수에 들어와서 재지정 현재 OpenAI API Key: {openai.api_key}")
-
+        print('GPT 정돈 시작')
         # 프롬프트 정의
         prompt = f"""
         아래는 정제된 웹 페이지의 HTML입니다. 이 HTML에서 다음 정보를 추출하여 이 HTML에서 다음 정보를 꼭 **유효한 JSON 형식으로만 백틱 없이 반환하세요**. 다른 텍스트나 설명은 포함하지 마세요.:
@@ -89,7 +79,6 @@ class HTMLCleanerAndGPTExtractor:
         - 비디오 및 오디오(media) : 본문 내에 미디어가 있을경우 {{"캡션" : "링크url"}} 딕셔너리 형식으로 저장
         - 파일 다운로드 링크(file_download_links) : 주요한 PDF, 이미지, 문서 등의 다운로드 링크가 있을경우 {{"파일제목 | 파일 크기": "링크url"}} 딕셔너리 형식으로 저장
         - 콘텐츠의 길이(content_length) : 콘텐츠를 읽는데 걸리는 시간을 예측 1분 단위로
-
 
         HTML:
         \"\"\"
@@ -119,6 +108,7 @@ class HTMLCleanerAndGPTExtractor:
             "content_length": "m"
         }}
         """
+        
         print("gpt 시작")
         try:
             response = openai.ChatCompletion.create(
@@ -132,29 +122,8 @@ class HTMLCleanerAndGPTExtractor:
                 timeout=30
             )
             extracted_info = response['choices'][0]['message']['content'].strip()
-            print("GPT 응답 성공:", extracted_info)
-
-            # 백틱 제거
-            extracted_info = self.remove_backticks(extracted_info)
-            print("백틱 제거")
-
-            try:
-                processed_data = json.loads(extracted_info)  # 응답을 JSON으로 변환
-                print("JSON 데이터 형식 확인 성공:")
-            except json.JSONDecodeError as e:
-                print("GPT 응답이 유효한 JSON 형식이 아닙니다. 오류:", str(e))
-                raise ValueError("Invalid JSON format")
-
-            # date 필드가 없을 경우 기본값 설정
-            if 'date' in processed_data:
-                if not re.match(r'\d{4}-\d{2}-\d{2}', processed_data['date']):
-                    processed_data['date'] = '0001-01-01'
-
-            # JSON 변환 및 검증
-
-
-            # 처리된 JSON 반환
-            return processed_data
+            print("GPT 정돈기 응답 성공:", extracted_info)
+            return extracted_info
 
         except openai.error.AuthenticationError:
             print("인증 실패: 유효하지 않은 API Key입니다.")
@@ -169,35 +138,65 @@ class HTMLCleanerAndGPTExtractor:
             print(f"알 수 없는 오류 발생: {str(e)}")
             raise RuntimeError(f"알 수 없는 오류 발생: {str(e)}")
 
+
+    def GPT_to_json(self, extracted_info):
+        # 백틱 제거, JSON 로드, date 형식 검증
+        print('JSON 데이터 형식 확인 시작')
+        try:
+            if extracted_info.startswith('```') and extracted_info.endswith('```'):
+            extracted_info = extracted_info[3:-3].strip()
+
+            processed_data = json.loads(extracted_info)
+            if 'date' in processed_data:
+                if not re.match(r'\d{4}-\d{2}-\d{2}', processed_data['date']):
+                    processed_data['date'] = '0001-01-01'
+            print("JSON 데이터 형식 확인 성공")
+            return processed_data
+
+        except json.JSONDecodeError as e:
+            print("GPT 응답이 유효한 JSON 형식이 아닙니다. 오류:", str(e))
+            raise ValueError("Invalid JSON format")
+
+
     def process_url(self, url):
         """
         URL을 받아 HTML을 클리닝하고 GPT 모델로 정보를 추출합니다.
-        Args:
-            url (str): 처리할 웹 페이지의 URL
-        Returns:
-            dict: 추출된 정보
+        Args: url (str): 처리할 웹 페이지의 URL
+        Returns: dict: 추출된 정보
         """
         try:
             response = requests.get(url)
-            response.raise_for_status()
             raw_html = response.text
             cleaned_html = self.clean_html_style_tags(raw_html)
             extracted_info = self.extract_information_with_gpt(cleaned_html)
-            return extracted_info
+            processed_data = self.GPT_to_json(extracted_info)
+            return processed_data
+
         except requests.exceptions.RequestException as e:
-            raise RuntimeError(f"요청 실패: {e}")
+            print(f"HTTP 요청 실패: {e}")
+            return {"error": "HTTP 요청 실패", "details": str(e)}
+        except Exception as e:
+            print(f"알 수 없는 오류 발생: {e}")
+            return {"error": "알 수 없는 오류 발생", "details": str(e)}
 
     def process_raw_html(self, raw_html):
         """
         정제되지 않은 HTML을 받아 클리닝하고 GPT 모델로 정보를 추출합니다.
-        Args:
-            raw_html (str): 처리할 HTML 콘텐츠
-        Returns:
-            dict: 추출된 정보
+        Args: raw_html (str): 처리할 HTML 콘텐츠
+        Returns: dict: 추출된 정보
         """
-        cleaned_html = self.clean_html_style_tags(raw_html)
-        extracted_info = self.extract_information_with_gpt(cleaned_html)
-        return extracted_info
+        try:
+            cleaned_html = self.clean_html_style_tags(raw_html)
+            extracted_info = self.extract_information_with_gpt(cleaned_html)
+            processed_data = self.GPT_to_json(extracted_info)
+            return processed_data
+
+        except requests.exceptions.RequestException as e:
+            print(f"HTTP 요청 실패: {e}")
+            return {"error": "HTTP 요청 실패", "details": str(e)}
+        except Exception as e:
+            print(f"알 수 없는 오류 발생: {e}")
+            return {"error": "알 수 없는 오류 발생", "details": str(e)}
 
 
     def remove_backticks(self, text):
