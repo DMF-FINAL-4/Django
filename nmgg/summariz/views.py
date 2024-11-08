@@ -22,7 +22,6 @@ def process_new_page(request):
             print("API 키 가져오기 시도")
             openai_api_key = settings.OPENAI_API_KEY
             if not openai_api_key:
-                print("API 키가 설정되지 않았음")
                 return JsonResponse({'error': 'API key not found'}, status=500)
 
             # HTMLCleanerAndGPTExtractor 클래스 인스턴스화
@@ -152,13 +151,6 @@ def process_search(request):
             if not query:
                 return JsonResponse({'error': '검색어가 제공되지 않았습니다.'}, status=400)
 
-            # # Elasticsearch 클라이언트 초기화
-            # es = Elasticsearch(
-            #     hosts=[{"host": "localhost", "port": 9200}],
-            #     use_ssl=True,
-            #     verify_certs=False
-            # )
-
             # 검색 쿼리 구성
             body = {
                 "query": {
@@ -167,7 +159,7 @@ def process_search(request):
                     }
                 }
             }
-            
+
             es = settings.ELASTICSEARCH
             print('검색 요청 시작')
             # Elasticsearch에 검색 요청

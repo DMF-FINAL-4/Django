@@ -12,15 +12,11 @@ import re
 
 class HTMLCleanerAndGPTExtractor:
 
-
     def __init__(self, openai_api_key):
         # 초기화 메서드로, API 키를 초기화합니다.
         self.openai_api_key = openai_api_key
         openai.api_key = self.openai_api_key
-        # 키 확인
-        # print(f"OpenAI API Key 설정됨: {openai.api_key}")
         print('html 정보 추출 클래스 인스턴스 생성')
-
 
     def clean_html_style_tags(self, raw_html_content):
         """
@@ -28,27 +24,30 @@ class HTMLCleanerAndGPTExtractor:
         Args: raw_html_content (str): 정제할 HTML 콘텐츠
         Returns: str: 정제된 HTML 콘텐츠
         """
-        print('태그 정돈 시작')
-        # BeautifulSoup 객체 생성 (lxml 파서 사용)
-        soup = BeautifulSoup(raw_html_content, 'lxml')
-        # 제거할 태그 리스트 (스타일 및 장식적인 태그)
-        tags_to_remove = ['style', 'script', 'aside', 'nav', 'footer', 'header', 'iframe', 'noscript', 'form']
-        # 태그와 그 내용을 완전히 제거
-        for tag in tags_to_remove:
-            for element in soup.find_all(tag):
-                element.decompose()
-        # 제거할 속성 리스트 (스타일 관련 속성)
-        attributes_to_remove = ['style', 'class', 'id']
-        # 모든 태그 순회
-        for tag in soup.find_all(True):
-            for attr in attributes_to_remove:
-                if attr in tag.attrs:
-                    del tag.attrs[attr]
-        # 정제된 HTML 문자열 반환
-        cleaned_html = str(soup)
-        print('태그 정돈 완료')
-        return cleaned_html
+        try:
+            print('태그 정돈 시작')
+            # BeautifulSoup 객체 생성 (lxml 파서 사용)
+            soup = BeautifulSoup(raw_html_content, 'lxml')
+            # 제거할 태그 리스트 (스타일 및 장식적인 태그)
+            tags_to_remove = ['style', 'script', 'aside', 'nav', 'footer', 'header', 'iframe', 'noscript', 'form']
+            # 태그와 그 내용을 완전히 제거
+            for tag in tags_to_remove:
+                for element in soup.find_all(tag):
+                    element.decompose()
+            # 제거할 속성 리스트 (스타일 관련 속성)
+            attributes_to_remove = ['style', 'class', 'id']
+            # 모든 태그 순회
+            for tag in soup.find_all(True):
+                for attr in attributes_to_remove:
+                    if attr in tag.attrs:
+                        del tag.attrs[attr]
+            # 정제된 HTML 문자열 반환
+            cleaned_html = str(soup)
+            print('태그 정돈 완료')
+            return cleaned_html
 
+        except Exception as e:
+            raise RuntimeError(f"HTML 태그 정제 중 오류 발생: {str(e)}")
 
     def extract_information_with_gpt(self, cleaned_html):
         """
@@ -70,7 +69,7 @@ class HTMLCleanerAndGPTExtractor:
         - 작성일 (date) : 페이지의 작성일 yyyy-MM-dd
         - 본문 (content) : 명백한 오타 수정을 제외한 텍스트 외곡이 없으며, 표 내부의 내용 등을 포함한 누락 없는 본문
         - 짧은 요약 (short_summary) : 본문을 20자에서 90자로 사이로 요약
-        - 긴 요약 (long_summary) : 본문을 200자에서 400자 사이로 요약
+        - 긴 요약 (long_summary) : 본문을 200자에서 400자로 요약
         - 키워드 (keywords) : 본문의 키워드들 내용이 길고 요소가 많다면 키워드들이 아주 많아져도 좋아
         - 유형 키워드 (category_keywords) : 블로그, 카페, 기사, 정보, 사연, 에세이, 영상, 사진, 리뷰, 쇼핑, sns 등 유형이라 할 수 있는 키워드들 풍부하게
         - 댓글 (comments) : 댓글이 있다면 '작성자 | 댓글내용 | 작성시간' 형식으로 저장
@@ -88,7 +87,7 @@ class HTMLCleanerAndGPTExtractor:
         JSON 형식 예시:
         {{
             "access_permission": "정상",
-            "favicon" : "https://www.example.com/favicon.ico"
+            "favicon" : "https://www.example.com/favicon.ico",
             "host_domain": "example.com",
             "host_name": "네이버 뉴스",
             "alternate_url": "https://www.example.com/page-url",
@@ -100,7 +99,7 @@ class HTMLCleanerAndGPTExtractor:
             "long_summary": "본문을 200자에서 400자로 요약한 내용",
             "keywords": ["키워드1", "키워드2"],
             "category_keywords": ["블로그", "카페"],
-            "comments": ["작성자1 | 댓글내용1 | yyyy-MM-dd", "작성자2 | 댓글내용2 | yyyyy-MM-dd"],
+            "comments": ["작성자1 | 댓글내용1 | yyyy-MM-dd", "작성자2 | 댓글내용2 | yyyy-MM-dd"],
             "image_links": {{"이미지캡션1": "https://example.com/image1.jpg", "이미지캡션2": "https://example.com/image2.jpg" }},
             "links": {{"캡션1": "https://example.com/image1.jpg", "캡션2": "https://example.com/image2.jpg" }},
             "media_links": {{"캡션1": "https://example.com/image1.jpg", "캡션2": "https://example.com/image2.jpg" }},
@@ -109,7 +108,6 @@ class HTMLCleanerAndGPTExtractor:
         }}
         """
         
-        print("gpt 시작")
         try:
             response = openai.ChatCompletion.create(
                 model="gpt-4o-mini",
@@ -122,41 +120,24 @@ class HTMLCleanerAndGPTExtractor:
                 timeout=30
             )
             extracted_info = response['choices'][0]['message']['content'].strip()
-            print("GPT 정돈기 응답 성공:", extracted_info)
             return extracted_info
 
-        except openai.error.AuthenticationError:
-            print("인증 실패: 유효하지 않은 API Key입니다.")
-            raise ValueError("인증 실패: API Key가 유효하지 않습니다.")
-        except openai.error.RateLimitError:
-            print("요청이 너무 많습니다. API Rate Limit 초과.")
-            raise RuntimeError("API Rate Limit 초과: 나중에 다시 시도하세요.")
-        except openai.error.OpenAIError as e:
-            print(f"OpenAI API 오류 발생: {str(e)}")
-            raise RuntimeError(f"OpenAI API 오류 발생: {str(e)}")
         except Exception as e:
-            print(f"알 수 없는 오류 발생: {str(e)}")
-            raise RuntimeError(f"알 수 없는 오류 발생: {str(e)}")
-
+            raise RuntimeError(f"GPT 요약 중 오류 발생: {str(e)}")
 
     def GPT_to_json(self, extracted_info):
         # 백틱 제거, JSON 로드, date 형식 검증
-        print('JSON 데이터 형식 확인 시작')
         try:
             if extracted_info.startswith('```') and extracted_info.endswith('```'):
-            extracted_info = extracted_info[3:-3].strip()
-
+                extracted_info = extracted_info[3:-3].strip()
             processed_data = json.loads(extracted_info)
             if 'date' in processed_data:
                 if not re.match(r'\d{4}-\d{2}-\d{2}', processed_data['date']):
                     processed_data['date'] = '0001-01-01'
-            print("JSON 데이터 형식 확인 성공")
             return processed_data
 
         except json.JSONDecodeError as e:
-            print("GPT 응답이 유효한 JSON 형식이 아닙니다. 오류:", str(e))
-            raise ValueError("Invalid JSON format")
-
+            raise ValueError(f"GPT 응답이 유효한 JSON 형식이 아닙니다: {str(e)}")
 
     def process_url(self, url):
         """
@@ -172,11 +153,7 @@ class HTMLCleanerAndGPTExtractor:
             processed_data = self.GPT_to_json(extracted_info)
             return processed_data
 
-        except requests.exceptions.RequestException as e:
-            print(f"HTTP 요청 실패: {e}")
-            return {"error": "HTTP 요청 실패", "details": str(e)}
         except Exception as e:
-            print(f"알 수 없는 오류 발생: {e}")
             return {"error": "알 수 없는 오류 발생", "details": str(e)}
 
     def process_raw_html(self, raw_html):
@@ -190,23 +167,3 @@ class HTMLCleanerAndGPTExtractor:
             extracted_info = self.extract_information_with_gpt(cleaned_html)
             processed_data = self.GPT_to_json(extracted_info)
             return processed_data
-
-        except requests.exceptions.RequestException as e:
-            print(f"HTTP 요청 실패: {e}")
-            return {"error": "HTTP 요청 실패", "details": str(e)}
-        except Exception as e:
-            print(f"알 수 없는 오류 발생: {e}")
-            return {"error": "알 수 없는 오류 발생", "details": str(e)}
-
-
-    def remove_backticks(self, text):
-        """
-        문자열의 앞뒤에 있는 백틱(```)을 제거합니다.
-        Args:
-            text (str): 처리할 문자열
-        Returns:
-            str: 백틱이 제거된 문자열
-        """
-        if text.startswith('```') and text.endswith('```'):
-            return text[3:-3].strip()
-        return text
