@@ -31,11 +31,11 @@ def process_new_page(request):
             print("HTML 프로세스 성공")
 
             # Elasticsearch에 데이터 업로드 시도
-            es_upload_to_pages(processed_data)
+            res_dict = es_upload_to_pages(processed_data)
             print("Elasticsearch에 데이터 업로드 성공")
 
             # 성공적으로 처리된 경우 응답 반환
-            return JsonResponse({'status': 'success', 'data': processed_data}, status=200)
+            return JsonResponse({'status': 'success', 'data': res_dict}, status=200)
 
         except json.JSONDecodeError:
             print("HTML 불러오기 오류")
@@ -78,11 +78,11 @@ def process_new_urls(request):
             print("url 프로세스 성공")
 
             # Elasticsearch에 데이터 업로드 시도
-            es_upload_to_pages(processed_data)
+            res_dict = es_upload_to_pages(processed_data)
             print("Elasticsearch에 데이터 업로드 성공")
 
             # 성공적으로 처리된 경우 응답 반환
-            return JsonResponse({'status': 'success', 'data': processed_data}, status=200)
+            return JsonResponse({'status': 'success', 'data': res_dict}, status=200)
 
         except json.JSONDecodeError:
             print("HTML 불러오기 오류")

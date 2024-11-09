@@ -12,6 +12,10 @@ import json
 import re
 import requests
 
+
+def processed_data_검증(processed_data):
+    pass
+
 def es_upload_to_pages(processed_data):
     # Elasticsearch에 데이터 업로드
     print("Elasticsearch에 데이터 업로드 시도")
