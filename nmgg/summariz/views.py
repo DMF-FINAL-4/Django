@@ -28,7 +28,9 @@ def process_new_page(request):
 
             # HTML 프로세스 처리
             processed_data = processer.process_raw_html(raw_html)
-            print("HTML 프로세스 성공")
+            if processed_data('error'):
+                return {"error": "알 수 없는 오류 발생", "details": processed_data('details')}
+            print("url 프로세스 성공")
 
             # Elasticsearch에 데이터 업로드 시도
             res_dict = es_upload_to_pages(processed_data)
@@ -59,7 +61,7 @@ def process_new_page(request):
 
 
 @csrf_exempt
-def process_new_urls(request):
+def process_new_url(request):
     if request.method == 'POST':
 
         # URL 가져오기
@@ -75,6 +77,8 @@ def process_new_urls(request):
 
             # HTML 프로세스 처리
             processed_data = processer.process_url(url)
+            if processed_data('error'):
+                return {"error": "알 수 없는 오류 발생", "details": processed_data('details')}
             print("url 프로세스 성공")
 
             # Elasticsearch에 데이터 업로드 시도
