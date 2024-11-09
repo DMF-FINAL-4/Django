@@ -1,4 +1,5 @@
-# views의 가독성 향상과 함수 재사용을 위한 유틸 함수, 클래스 파일입니다. 
+# views의 가독성 향상과 함수 재사용을 위한 유틸 함수, 클래스 파일입니다.
+# 오류 return 은 raise 처리해야 함
 
 from django.conf import settings
 from dotenv import load_dotenv
@@ -9,13 +10,45 @@ import argparse
 import openai
 import json
 import re
+import requests
+
+def es_upload_to_pages(processed_data):
+    # Elasticsearch에 데이터 업로드
+    print("Elasticsearch에 데이터 업로드 시도")
+    try:
+        es = settings.ELASTICSEARCH
+        if not es:
+            print("Elasticsearch 클라이언트가 설정되지 않음")
+            raise RuntimeError('Elasticsearch client not configured')
+    
+        try:
+            res = es.index(index='pages', pipeline='add_created_at', body=processed_data)
+
+            # 응답을 딕셔너리 형식으로 변환
+            if hasattr(res, 'to_dict'):
+                res_dict = res.to_dict()  # to_dict() 메서드를 사용하여 변환
+            else:
+                res_dict = dict(res)  # 이미 딕셔너리인 경우 그대로 사용
+
+            print("Elasticsearch 업로드 성공:", res_dict)
+            return res_dict
+        except Exception as e:
+            print("Elasticsearch 업로드 중 알 수 없는 오류 발생:", str(e))
+            raise RuntimeError(f"Elasticsearch 업로드 오류: {str(e)}")
+    except Exception as e:
+        print("Elasticsearch 설정 오류 발생:", str(e))
+        raise RuntimeError(f"Elasticsearch 설정 오류 발생: {str(e)}")
 
 class HTMLCleanerAndGPTExtractor:
 
-    def __init__(self, openai_api_key):
-        # 초기화 메서드로, API 키를 초기화합니다.
-        self.openai_api_key = openai_api_key
-        openai.api_key = self.openai_api_key
+    def __init__(self):
+        # API 키를 초기화합니다.
+        openai_api_key = settings.OPENAI_API_KEY
+        if not openai_api_key:
+            raise ValueError("API key not found")
+
+        openai.api_key = openai_api_key
+        print('OPENAI_API_KEY 등록')
         print('html 정보 추출 클래스 인스턴스 생성')
 
     def clean_html_style_tags(self, raw_html_content):
@@ -137,6 +170,7 @@ class HTMLCleanerAndGPTExtractor:
             return processed_data
 
         except json.JSONDecodeError as e:
+            print('GPT 응답이 유효한 JSON 형식이 아닙니다.')
             raise ValueError(f"GPT 응답이 유효한 JSON 형식이 아닙니다: {str(e)}")
 
     def process_url(self, url):
@@ -152,7 +186,6 @@ class HTMLCleanerAndGPTExtractor:
             extracted_info = self.extract_information_with_gpt(cleaned_html)
             processed_data = self.GPT_to_json(extracted_info)
             return processed_data
-
         except Exception as e:
             return {"error": "알 수 없는 오류 발생", "details": str(e)}
 
@@ -167,3 +200,5 @@ class HTMLCleanerAndGPTExtractor:
             extracted_info = self.extract_information_with_gpt(cleaned_html)
             processed_data = self.GPT_to_json(extracted_info)
             return processed_data
+        except Exception as e:
+            return {"error": "알 수 없는 오류 발생", "details": str(e)}

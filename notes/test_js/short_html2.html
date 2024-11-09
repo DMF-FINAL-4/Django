@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Document</title>
+</head>
+<body>
+	<script>
+	fetch('http://127.0.0.1:8000/page_save/new_page/', {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify({ html: `<!DOCTYPE html>
+    <html lang="ko">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>기술 혁신: AI가 의료 진단의 정확도를 높인다</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                line-height: 1.6;
+                margin: 0;
+                padding: 20px;
+                max-width: 800px;
+                margin: auto;
+            }
+            header {
+                background-color: #f4f4f4;
+                padding: 10px;
+                margin-bottom: 20px;
+            }
+            h1 {
+                color: #333;
+            }
+            .author, .date {
+                color: #666;
+                font-style: italic;
+            }
+            img {
+                max-width: 100%;
+                height: auto;
+                margin-bottom: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <h1>기술 혁신: AI가 의료 진단의 정확도를 높인다</h1>
+            <p class="author">작성자: 김기자</p>
+            <p class="date">발행일: 2024년 11월 6일</p>
+        </header>
+    
+        <main>
+    
+            <p>인공지능(AI) 기술이 의료 분야에 혁명을 일으키고 있습니다.</p>
+    
+            
+        </main>
+    
+        <footer>
+            <p>© 2024 테크뉴스</p>
+        </footer>
+    </body>
+    </html>` })  // 전송할 URL
+	})
+	.then(response => response.json())
+	.then(data => {
+		if (data.status === 'success') {
+			console.log('데이터 업로드 성공:', data.data);
+		} else {
+			console.error('에러 발생:', data.message);
+		}
+	})
+	.catch((error) => {
+		console.error('요청 실패:', error);
+	});
+	</script>
+</body>
+</html>
