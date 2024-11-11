@@ -22,7 +22,7 @@ def classify_response():
             # 검색결과가 있으면 결과 반환 없으면 return False
             if 0 < es_res.get('hits', {}).get('total',{}).get('value')  :
                 hits = es_res.get('hits', {}).get('hits', [])
-                results = [hit['_source'] for hit in hits]
+                results = [{"id": hit.get("_id"), **hit.get("_source", {})} for hit in hits]
                 return results
         return False
     else:
@@ -220,15 +220,15 @@ def search_full_list():
 
     # 검색 쿼리 작성
     body = {
-        "_source": ["alternate_url", "favicon", "title", "keywords", "created_at"],  // 가져오고 싶은 필드들
+        "_source": ["alternate_url", "favicon", "title", "keywords", "created_at"],  # 가져오고 싶은 필드들
         "query": {
-            "match_all": {}  // 모든 문서 검색
+            "match_all": {}  # 모든 문서 검색
         },
         "sort": [
             {
-            "created_at": {
-                "order": "desc"  // 최신순 정렬
-            }
+                "created_at": {
+                    "order": "desc"  # 최신순 정렬
+                }
             }
         ]
     }
@@ -238,10 +238,9 @@ def search_full_list():
         response = es.search(index=index, body=body)
         hits = response.get('hits', {}).get('hits', [])
 
-        # 검색 결과 반환
-        results = [hit['_source'] for hit in hits]
+        # 검색 결과 반환 (각 문서의 ID 포함)
+        results = [{"id": hit.get("_id"), **hit.get("_source", {})} for hit in hits]
         return results
-
 
     except NotFoundError:
         return {'status': 'error', 'message': '인덱스를 찾을 수 없습니다.'}
@@ -277,7 +276,7 @@ def search_page_by_tkm(tag, keyword, method):
         hits = response.get('hits', {}).get('hits', [])
 
         # 검색 결과 반환
-        results = [hit['_source'] for hit in hits]
+        results = [{"id": hit.get("_id"), **hit.get("_source", {})} for hit in hits]
         return results
 
     except NotFoundError:
@@ -332,8 +331,10 @@ def search_by_text(query_text):
         results = []
         for hit in hits:
             source = hit['_source']
+            document_id = hit['_id']  # 문서의 ID 값
             highlight = hit.get('highlight', {})
             results.append({
+                "id": document_id,  # 문서 ID 추가
                 "source": source,
                 "highlight": highlight
             })
@@ -341,6 +342,23 @@ def search_by_text(query_text):
 
     except Exception as e:
         return {"error": f"Failed to fetch documents: {str(e)}"}
+    # 출력 예시
+    # [
+    #     {
+    #         "id": "12345",
+    #         "source": {
+    #             "title": "엘라스틱서치 소개",
+    #             "author": "이시운",
+    #             "created_at": "2024-11-07"
+    #         },
+    #         "highlight": {
+    #             "content": [
+    #                 "<em>엘라스틱서치</em>는 분산형 검색 엔진입니다."
+    #             ]
+    #         }
+    #     }
+    # ]
+
 
 
 def search_by_similarity(doc_id, index="pages"):
@@ -375,7 +393,7 @@ def search_by_similarity(doc_id, index="pages"):
         hits = response.get('hits', {}).get('hits', [])
 
         # 검색 결과 반환
-        results = [hit['_source'] for hit in hits]
+        results = [{"id": hit.get("_id"), **hit.get("_source", {})} for hit in hits]
         return results
 
     except Exception as e:
