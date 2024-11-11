@@ -66,7 +66,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # 'page_save',
+    'pages',
     'summariz',
     'corsheaders', # CORS를 허용하기위해
 ]

@@ -1,8 +1,8 @@
-# views의 가독성 향상과 함수 재사용을 위한 유틸 함수, 클래스 파일입니다.
-# 오류 return 은 raise 처리해야 함
-
 from django.conf import settings
 from dotenv import load_dotenv
+
+from elasticsearch import Elasticsearch, TransportError, ConnectionError, NotFoundError
+from elasticsearch.exceptions import NotFoundError, RequestError
 
 from bs4 import BeautifulSoup
 import os
@@ -12,7 +12,24 @@ import json
 import re
 import requests
 
-class HTMLCleanerAndGPTExtractor:
+import .views
+
+def classify_response():
+    if respons['url'] and response['html']:
+    	if False == response['duplicates']:
+	    	url = respons['url']
+            es_res = search_page_by_tkm('url', url, 'term')
+            # 검색결과가 있으면 결과 반환 없으면 return False
+            if 0 < es_res.get('hits', {}).get('total',{}).get('value')  :
+                hits = es_res.get('hits', {}).get('hits', [])
+                results = [hit['_source'] for hit in hits]
+                return results
+        return False
+    else:
+        raise
+
+
+class HTMLSummariz:
 
     def __init__(self):
         # API 키를 초기화합니다.
@@ -149,22 +166,8 @@ class HTMLCleanerAndGPTExtractor:
             print('GPT 응답이 유효한 JSON 형식이 아닙니다.')
             raise ValueError(f"GPT 응답이 유효한 JSON 형식이 아닙니다: {str(e)}")
 
-    def process_url(self, url):
-        """
-        URL을 받아 HTML을 클리닝하고 GPT 모델로 정보를 추출합니다.
-        Args: url (str): 처리할 웹 페이지의 URL
-        Returns: dict: 추출된 정보
-        """
-        try:
-            response = requests.get(url)
-            raw_html = response.text
-            processed_data = self.process_raw_html(raw_html)
-            print('process_url 완료')
-            return processed_data
-        except Exception as e:
-            return {"error": "알 수 없는 오류 발생", "details": str(e)}
 
-    def process_raw_html(self, raw_html):
+    def process(self, raw_html):
         """
         정제되지 않은 HTML을 받아 클리닝하고 GPT 모델로 정보를 추출합니다.
         Args: raw_html (str): 처리할 HTML 콘텐츠
@@ -174,15 +177,13 @@ class HTMLCleanerAndGPTExtractor:
             cleaned_html = self.clean_html_style_tags(raw_html)
             extracted_info = self.extract_information_with_gpt(cleaned_html)
             processed_data = self.GPT_to_json(extracted_info)
-            print('process_raw_html 완료')
-            # print(processed_data)
+            print('process 완료')
             return processed_data
         except Exception as e:
             return {"error": "알 수 없는 오류 발생", "details": str(e)}
 
 
-
-def upload_to_elasticsearch(processed_json):
+def upload_to_elasticsearch(processed_json,index='pages',pipeline='add_created_at'):
     # Elasticsearch에 데이터 업로드
     print("Elasticsearch에 데이터 업로드 시도")
     try:
@@ -192,7 +193,7 @@ def upload_to_elasticsearch(processed_json):
             raise RuntimeError('Elasticsearch client not configured')
     
         try:
-            res = es.index(index='pages', pipeline='add_created_at', body=processed_json)
+            res = es.index(index=index, pipeline=pipeline, body=processed_json)
             print('업로드 완료 res')
             # 응답을 딕셔너리 형식으로 변환
             if hasattr(res, 'to_dict'):
@@ -208,3 +209,174 @@ def upload_to_elasticsearch(processed_json):
     except Exception as e:
         print("Elasticsearch 설정 오류 발생:", str(e))
         raise RuntimeError(f"Elasticsearch 설정 오류 발생: {str(e)}")
+
+
+
+
+def search_full_list():
+    es = settings.ELASTICSEARCH
+    if not es:
+        return {"error": "Elasticsearch client not configured"}
+
+    # 검색 쿼리 작성
+    body = {
+        "_source": ["alternate_url", "favicon", "title", "keywords", "created_at"],  // 가져오고 싶은 필드들
+        "query": {
+            "match_all": {}  // 모든 문서 검색
+        },
+        "sort": [
+            {
+            "created_at": {
+                "order": "desc"  // 최신순 정렬
+            }
+            }
+        ]
+    }
+
+    try:
+        # Elasticsearch에 검색 요청 전송
+        response = es.search(index=index, body=body)
+        hits = response.get('hits', {}).get('hits', [])
+
+        # 검색 결과 반환
+        results = [hit['_source'] for hit in hits]
+        return results
+
+
+    except NotFoundError:
+        return {'status': 'error', 'message': '인덱스를 찾을 수 없습니다.'}
+    except RequestError as e:
+        return {'status': 'error', 'message': str(e)}
+    except Exception as e:
+        return {'status': 'error', 'message': f'알 수 없는 오류 발생: {str(e)}'}
+
+def search_page_by_tkm(tag, keyword, method):
+    es = settings.ELASTICSEARCH
+    if not es:
+        return {"error": "Elasticsearch client not configured"}
+
+    if not keyword:
+        return {'error': '검색어가 제공되지 않았습니다.'}
+    if not tag:
+        return {'error': 'tag가 제공되지 않았습니다.'}
+    if not method:
+        return {'error': 'method가 제공되지 않았습니다.'}
+
+    # 검색 쿼리 작성
+    body = {
+        "query": {
+            method: {
+                tag: keyword
+            }
+        }
+    }
+
+    try:
+        # Elasticsearch에 검색 요청 전송
+        response = es.search(index=index, body=body)
+        hits = response.get('hits', {}).get('hits', [])
+
+        # 검색 결과 반환
+        results = [hit['_source'] for hit in hits]
+        return results
+
+    except NotFoundError:
+        return {'status': 'error', 'message': '인덱스를 찾을 수 없습니다.'}
+    except RequestError as e:
+        return {'status': 'error', 'message': str(e)}
+    except Exception as e:
+        return {'status': 'error', 'message': f'알 수 없는 오류 발생: {str(e)}'}
+
+
+def search_by_text(query_text):
+    # Elasticsearch 클라이언트 초기화
+    es = settings.ELASTICSEARCH
+    if not es:
+        return {"error": "Elasticsearch client not configured"}
+
+    if not query_text:
+        return {"error": "검색어를 입력하지 않았습니다."}
+
+    # Elasticsearch 쿼리 본문 정의
+    body = {
+        "query": {
+            "multi_match": {
+                "query": query_text,
+                "fields": ["title", "author", "content", "short_summary", "long_summary", "keywords", "comments.author", "comments.content", "image_links.caption", "file_download_links.caption"]
+            }
+        },
+        "highlight": {
+            "fields": {
+                "author": {},
+                "content" {},
+                "short_summary": {}
+                "long_summary" {},
+                "keywords": {},
+                "comments.author": {}
+                "comments.content": {},
+                "image_links.caption": {},
+                "file_download_links.caption": {}
+            },
+            "pre_tags": ["<strong>"],
+            "post_tags": ["</strong>"]
+        }
+    }
+
+
+    try:
+        # Elasticsearch에 검색 쿼리 요청
+        response = es.search(index="pages", body=body)
+        hits = response.get('hits', {}).get('hits', [])
+
+        # 검색 결과 및 하이라이트 처리
+        results = []
+        for hit in hits:
+            source = hit['_source']
+            highlight = hit.get('highlight', {})
+            results.append({
+                "source": source,
+                "highlight": highlight
+            })
+        return results
+
+    except Exception as e:
+        return {"error": f"Failed to fetch documents: {str(e)}"}
+
+
+def search_by_similarity(doc_id, index="pages"):
+    # Elasticsearch 클라이언트 초기화
+    es = settings.ELASTICSEARCH
+    if not es:
+        return {"error": "Elasticsearch client not configured"}
+
+    if not doc_id:
+        return {"error": "doc_id가 제공되지 않았습니다."}
+
+    # `more_like_this` 쿼리 정의
+    body = {
+        "query": {
+            "more_like_this": {
+                "fields":  ["title", "author", "content", "short_summary", "long_summary","category_keywords""comments.author", "comments.content", "image_links.caption", "file_download_links.caption"],  # 비교할 필드들
+                "like": [
+                    {
+                        "_index": index,
+                        "_id": doc_id
+                    }
+                ],
+                "min_term_freq": 1,
+                "min_doc_freq": 1
+            }
+        }
+    }
+
+    try:
+        # Elasticsearch에 검색 쿼리 요청
+        response = es.search(index=index, body=body)
+        hits = response.get('hits', {}).get('hits', [])
+
+        # 검색 결과 반환
+        results = [hit['_source'] for hit in hits]
+        return results
+
+    except Exception as e:
+        return {"error": f"Failed to fetch documents: {str(e)}"}

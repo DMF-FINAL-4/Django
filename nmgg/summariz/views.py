@@ -28,11 +28,12 @@ def process_new_page(request):
 
             # HTML 프로세스 처리
             processed_data = processer.process_raw_html(raw_html)
-            if processed_data('error'):
-                return {"error": "알 수 없는 오류 발생", "details": processed_data('details')}
-            print("url 프로세스 성공")
+            if 'error' in processed_data:
+                return {"error": "process_raw_html 오류 발생", "details": processed_data.get('details')}
+            print("html 프로세스 성공")
 
             # Elasticsearch에 데이터 업로드 시도
+            print('Elasticsearch에 데이터 업로드 시도')
             res_dict = es_upload_to_pages(processed_data)
             print("Elasticsearch에 데이터 업로드 성공")
 
@@ -51,7 +52,7 @@ def process_new_page(request):
         except Exception as e:
             # 기타 모든 예외 처리
             print(f"처리 중 알 수 없는 오류 발생: {str(e)}")
-            return JsonResponse({'status': 'error', 'message': 'An unknown error occurred'}, status=500)
+            return JsonResponse({'status': 'error', 'message': f'An unknown error occurred{str(e)}'}, status=500)
 
     # 잘못된 메서드의 경우
     else:
@@ -77,9 +78,9 @@ def process_new_url(request):
 
             # HTML 프로세스 처리
             processed_data = processer.process_url(url)
-            if processed_data('error'):
-                return {"error": "알 수 없는 오류 발생", "details": processed_data('details')}
-            print("url 프로세스 성공")
+            if 'error' in processed_data:
+                return {"error": "알 수 없는 오류 발생", "details": processed_data.get('details')}
+            print("html 프로세스 성공")
 
             # Elasticsearch에 데이터 업로드 시도
             res_dict = es_upload_to_pages(processed_data)
