@@ -1,5 +1,5 @@
-from django.conf import settings
-from dotenv import load_dotenv
+from django.conf import settings # import openai_api_key, ELASTICSEARCH
+from dotenv import load_dotenv 
 
 from elasticsearch import Elasticsearch, TransportError, ConnectionError, NotFoundError
 from elasticsearch.exceptions import NotFoundError, RequestError
@@ -12,21 +12,22 @@ import json
 import re
 import requests
 
-import .views
+from .views import *
 
-def classify_response():
-    if respons['url'] and response['html']:
-    	if False == response['duplicates']:
-	    	url = respons['url']
+def classify_response(response):
+    if response['url'] and response['html']:
+        if not response['duplicates']:
+            url = response['url']  #
             es_res = search_page_by_tkm('url', url, 'term')
             # 검색결과가 있으면 결과 반환 없으면 return False
-            if 0 < es_res.get('hits', {}).get('total',{}).get('value')  :
+            if es_res.get('hits', {}).get('total', {}).get('value', 0) > 0:
                 hits = es_res.get('hits', {}).get('hits', [])
                 results = [{"id": hit.get("_id"), **hit.get("_source", {})} for hit in hits]
                 return results
         return False
     else:
-        raise
+        raise ValueError("URL and HTML are required")  # 구체적인 예외 추가
+
 
 
 class HTMLSummariz:
@@ -249,7 +250,29 @@ def search_full_list():
     except Exception as e:
         return {'status': 'error', 'message': f'알 수 없는 오류 발생: {str(e)}'}
 
-def search_page_by_tkm(tag, keyword, method):
+
+def search_by_id(doc_id):
+    es = settings.ELASTICSEARCH
+    if not es:
+        return {"error": "Elasticsearch client not configured"}
+
+    try:
+        # Elasticsearch에 get 요청을 보내 문서 가져오기
+        response = es.get(index='pages', id=doc_id)
+
+        result = response["_source"]
+        result["id"] = response["_id"]
+
+    except NotFoundError:
+        return {"error": f"Document with ID {document_id} not found."}
+    except RequestError as e:
+        return {"error": f"Failed to fetch document due to request error: {str(e)}"}
+    except Exception as e:
+        return {"error": f"An unexpected error occurred: {str(e)}"}
+
+
+
+def search_by_tkm(tag, keyword, method):
     es = settings.ELASTICSEARCH
     if not es:
         return {"error": "Elasticsearch client not configured"}
@@ -306,12 +329,13 @@ def search_by_text(query_text):
         },
         "highlight": {
             "fields": {
+                "title": {},
                 "author": {},
-                "content" {},
-                "short_summary": {}
-                "long_summary" {},
+                "content": {},
+                "short_summary": {},
+                "long_summary": {},
                 "keywords": {},
-                "comments.author": {}
+                "comments.author": {},
                 "comments.content": {},
                 "image_links.caption": {},
                 "file_download_links.caption": {}
@@ -358,7 +382,6 @@ def search_by_text(query_text):
     #         }
     #     }
     # ]
-
 
 
 def search_by_similarity(doc_id, index="pages"):

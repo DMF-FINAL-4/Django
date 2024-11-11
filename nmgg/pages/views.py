@@ -1,15 +1,14 @@
 from django.shortcuts import render, redirect
-from django.conf import settings # import openai_api_key, es
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 
 import json
 
-import .utils
+from .utils import *
 
 def new_save(response):
-	is_duplycate = classify_response(response)
-    if is_duplycate:
+    is_duplycate = classify_response(response)
+    if is_duplycate == False:
         return is_duplycate['res본문']
     raw_html = response['html']
     html_summariz = HTMLSummariz()
@@ -20,7 +19,8 @@ def new_save(response):
 def full_list(response):
     full_list = search_full_list()
     return full_list
-def search(response):
+def id_search(response):
+    search_by_id
     pass
 
 def tag_search(response):
@@ -37,7 +37,7 @@ def tag_search(response):
     keyword = data.get('keyword')
     method = data.get('method')
     
-    tag_search_results = search_page_by_tkm(tag, keyword, method)
+    tag_search_results = search_by_tkm(tag, keyword, method)
 
     return tag_search_results
 
