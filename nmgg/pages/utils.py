@@ -1,3 +1,5 @@
+# utils.py
+
 from django.conf import settings # import openai_api_key, ELASTICSEARCH
 from dotenv import load_dotenv 
 
@@ -12,12 +14,12 @@ import json
 import re
 import requests
 
-from .views import *
 
-def classify_response(response):
-    if response['url'] and response['html']:
-        if not response['duplicates']:
-            url = response['url']  #
+
+def classify_request(request):
+    if request['url'] and request['html']:
+        if not request['duplicates']:
+            url = request['url']  #
             es_res = search_page_by_tkm('url', url, 'term')
             # 검색결과가 있으면 결과 반환 없으면 return False
             if es_res.get('hits', {}).get('total', {}).get('value', 0) > 0:
@@ -260,8 +262,10 @@ def search_by_id(doc_id):
         # Elasticsearch에 get 요청을 보내 문서 가져오기
         response = es.get(index='pages', id=doc_id)
 
-        result = response["_source"]
-        result["id"] = response["_id"]
+        id_search_results = response["_source"]
+        id_search_results["id"] = response["_id"]
+
+        return id_search_results
 
     except NotFoundError:
         return {"error": f"Document with ID {document_id} not found."}
@@ -269,7 +273,6 @@ def search_by_id(doc_id):
         return {"error": f"Failed to fetch document due to request error: {str(e)}"}
     except Exception as e:
         return {"error": f"An unexpected error occurred: {str(e)}"}
-
 
 
 def search_by_tkm(tag, keyword, method):
