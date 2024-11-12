@@ -81,14 +81,14 @@ class HTMLSummariz:
         - 본문 (content): 명백한 오타 수정을 제외한 텍스트 왜곡이 없으며, 표 내부의 내용 등을 포함한 누락 없는 본문을 출력합니다.
         - 짧은 요약 (short_summary): 본문을 20자에서 90자 사이로 요약합니다.
         - 긴 요약 (long_summary): 본문을 200자에서 400자 사이로 요약합니다.
-        - 키워드 (keywords): 본문의 키워드들을 출력합니다. 내용이 길고 요소가 많다면 키워드가 많아져도 좋습니다.
+        - 키워드 (keywords): 본문의 키워드들을 출력합니다. 내용이 많고 주제가 폭넓다면 키워드가 많아져도 좋습니다.
         - 유형 키워드 (category_keywords): 블로그, 카페, 기사, 정보, 사연, 에세이, 영상, 사진, 리뷰, 쇼핑, SNS 등 유형이라 할 수 있는 키워드들을 풍부하게 출력합니다.
-        - 댓글 (comments): 댓글이 있다면 `'작성자 | 댓글내용 | 작성시간'` 형식의 문자열로 리스트에 저장합니다.
-        - 이미지 링크 (image_links): 주요 이미지를 모두 링크 주소와 함께 `{"이미지캡션": "이미지링크URL"}` 딕셔너리 형식으로 저장합니다.
-        - 링크 (links): 본문 내에 주요한 외부 또는 내부 링크들이 있을 경우 `{"캡션": "링크URL"}` 딕셔너리 형식으로 저장합니다.
-        - 미디어 링크 (media_links): 본문 내에 비디오 및 오디오 등의 미디어가 있을 경우 `{"캡션": "링크URL"}` 딕셔너리 형식으로 저장합니다.
-        - 파일 다운로드 링크 (file_download_links): 주요한 PDF, 이미지, 문서 등의 다운로드 링크가 있을 경우 `{"파일제목 | 파일 크기": "링크URL"}` 딕셔너리 형식으로 저장합니다.
-        - 콘텐츠의 길이 (content_length): 콘텐츠를 읽는 데 걸리는 시간을 예측하여 분 단위로 출력합니다. (예시: "5분")
+        - 댓글 (comments): 댓글이 있다면 예시의 형식에 따라 모두 저장합니다.
+        - 이미지 링크 (image_links): 본문 이미지를 예시의 형식에 따라 모두 저장합니다.
+        - 링크 (links): 본문 내에 주요한 외부 또는 내부 링크들이 있을 경우 예시의 형식에 따라 모두 저장합니다.
+        - 미디어 링크 (media_links): 본문 내에 비디오 및 오디오 등의 미디어가 있을 경우 예시의 형식에 따라 모두 저장합니다.
+        - 파일 다운로드 링크 (file_download_links): 주요한 PDF, 이미지, 문서 등의 다운로드 링크가 있을 경우 예시의 형식에 따라 모두 저장합니다.
+        - 콘텐츠의 길이 (content_length): 콘텐츠를 읽는 데 걸리는 시간을 예측하여 분 단위로 출력합니다. (예시: "2")
 
         HTML:
         \"\"\"
@@ -110,24 +110,61 @@ class HTMLSummariz:
             "long_summary": "본문을 200자에서 400자로 요약한 내용",
             "keywords": ["키워드1", "키워드2"],
             "category_keywords": ["블로그", "카페"],
-            "comments": ["작성자1 | 댓글내용1 | yyyy-MM-dd", "작성자2 | 댓글내용2 | yyyy-MM-dd"],
-            "image_links": {{
-                "이미지캡션1": "https://example.com/image1.jpg",
-                "이미지캡션2": "https://example.com/image2.jpg"
-            }},
-            "links": {{
-                "캡션1": "https://example.com/link1.html",
-                "캡션2": "https://example.com/link2.html"
-            }},
-            "media_links": {{
-                "캡션1": "https://example.com/video1.mp4",
-                "캡션2": "https://example.com/audio1.mp3"
-            }},
-            "file_download_links": {{
-                "파일제목1 | 10MB": "https://example.com/file1.pdf",
-                "파일제목2 | 1.1GB": "https://example.com/file2.zip"
-            }},
-            "content_length": "5분"
+            "comments": [
+                {
+                    "author": "작성자1",
+                    "content": "댓글내용1",
+                    "date": "yyyy-MM-dd"
+                },
+                {
+                    "author": "작성자2",
+                    "content": "댓글내용2",
+                    "date": "yyyy-MM-dd"
+                }
+            ],
+            "image_links": [
+                {
+                    "caption": "이미지캡션1",
+                    "url": "https://example.com/image1.jpg"
+                },
+                {
+                    "caption": "이미지캡션2",
+                    "url": "https://example.com/image2.jpg"
+                }
+            ],
+            "links": [
+                {
+                    "caption": "캡션1",
+                    "url": "https://example.com/link1.html"
+                },
+                {
+                    "caption": "캡션2",
+                    "url": "https://example.com/link2.html"
+                }
+            ],
+            "media": [
+                {
+                    "caption": "캡션1",
+                    "url": "https://example.com/video1.mp4"
+                },
+                {
+                    "caption": "캡션2",
+                    "url": "https://example.com/audio1.mp3"
+                }
+            ],
+            "file_download_links": [
+                {
+                    "caption": "파일제목1",
+                    "size": "10MB",
+                    "url": "https://example.com/file1.pdf"
+                },
+                {
+                    "caption": "파일제목2",
+                    "size": "1.1GB",
+                    "url": "https://example.com/file2.zip"
+                }
+            ],
+            "content_length": m
         }}
         """
         try:
