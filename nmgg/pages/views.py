@@ -130,7 +130,3 @@ def similar_search(request):
         return JsonResponse({"error": str(e)}, status=500)
     
     return JsonResponse(similar_search_results, safe=False)
-
-@csrf_exempt
-def gpt_search(request):
-    pass
