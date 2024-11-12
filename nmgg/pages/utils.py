@@ -238,7 +238,7 @@ def search_full_list():
 
     try:
         # Elasticsearch에 검색 요청 전송
-        response = es.search(index=index, body=body)
+        response = es.search(index='pages', body=body)
         hits = response.get('hits', {}).get('hits', [])
 
         # 검색 결과 반환 (각 문서의 ID 포함)
@@ -298,7 +298,7 @@ def search_by_tkm(tag, keyword, method):
 
     try:
         # Elasticsearch에 검색 요청 전송
-        response = es.search(index=index, body=body)
+        response = es.search(index='pages', body=body)
         hits = response.get('hits', {}).get('hits', [])
 
         # 검색 결과 반환
@@ -400,7 +400,7 @@ def search_by_similarity(doc_id, index="pages"):
     body = {
         "query": {
             "more_like_this": {
-                "fields":  ["title", "author", "content", "short_summary", "long_summary","category_keywords""comments.author", "comments.content", "image_links.caption", "file_download_links.caption"],  # 비교할 필드들
+                "fields":  ["title", "author", "content", "short_summary", "long_summary", "category_keywords", "comments.author", "comments.content", "image_links.caption", "file_download_links.caption"],  # 비교할 필드들
                 "like": [
                     {
                         "_index": index,
@@ -415,7 +415,7 @@ def search_by_similarity(doc_id, index="pages"):
 
     try:
         # Elasticsearch에 검색 쿼리 요청
-        response = es.search(index=index, body=body)
+        response = es.search(index='pages', body=body)
         hits = response.get('hits', {}).get('hits', [])
 
         # 검색 결과 반환

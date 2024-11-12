@@ -8,12 +8,28 @@ import json
 from .utils import *
 
 @csrf_exempt
+@require_http_methods(["POST"])
 def new_save(request):
-    data = json.loads(request.body)  # POST 데이터 파싱
-    is_duplicate = classify_response(data)
-    if is_duplicate:
-        return JsonResponse({"error": "Duplicate content found"}, status=400)
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
     
+    try:
+        classification = classify_response(data)
+    except ValueError as e:
+        return JsonResponse({"error": str(e)}, status=400)
+    except RuntimeError as e:
+        return JsonResponse({"error": str(e)}, status=500)
+    
+    if classification:
+        # 중복이 있는 경우, 중복된 문서 리스트 반환
+        return JsonResponse({
+            "error": "Duplicate content found",
+            "duplicates": classification
+        }, status=400)
+    
+    # 중복이 없는 경우 진행
     raw_html = data.get('html')
     if not raw_html:
         return JsonResponse({"error": "HTML content is required"}, status=400)
@@ -24,7 +40,11 @@ def new_save(request):
     if 'error' in summariz_json:
         return JsonResponse(summariz_json, status=500)
     
-    es_res_dict = upload_to_elasticsearch(summariz_json)
+    try:
+        es_res_dict = upload_to_elasticsearch(summariz_json)
+    except RuntimeError as e:
+        return JsonResponse({"error": str(e)}, status=500)
+    
     return JsonResponse(es_res_dict, status=201)
 
 @csrf_exempt
@@ -74,7 +94,6 @@ def text_search(request):
     if isinstance(text_search_results, dict) and 'error' in text_search_results:
         return JsonResponse(text_search_results, status=400)
     return JsonResponse(text_search_results, safe=False)
-
 
 @csrf_exempt
 def similar_search(request):

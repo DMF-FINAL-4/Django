@@ -27,6 +27,13 @@ ELASTICSEARCH = Elasticsearch(
     max_retries=10,  # 최대 재시도 횟수
     retry_on_timeout=True  # 타임아웃 발생 시 재시도
 )
+# 필요시 사용
+# ELASTICSEARCH_HOST = os.getenv('ELASTICSEARCH_HOST', 'localhost')
+# ELASTICSEARCH_PORT = os.getenv('ELASTICSEARCH_PORT', '9200')
+# ELASTICSEARCH_INDEX = os.getenv('ELASTICSEARCH_INDEX', 'pages')
+
+# ELASTICSEARCH = Elasticsearch([{'host': ELASTICSEARCH_HOST, 'port': ELASTICSEARCH_PORT}])
+
 
 """
 Django settings for nmgg project.
