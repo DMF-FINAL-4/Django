@@ -98,7 +98,7 @@ def upload_to_elasticsearch_history(processed_json, index='history', pipeline='a
         raise RuntimeError(f"Elasticsearch 업로드 오류: {str(e)}")
 
 
-def search_full_list_history():
+def search_full_list_history(page=0, size=10):
     es = get_elasticsearch_client()
     body = {
         "_source": ["url", "favicon", "title", "created_at"],
@@ -111,7 +111,9 @@ def search_full_list_history():
                     "order": "desc"
                 }
             }
-        ]
+        ],
+        "from": page * size,  # 시작 지점 설정
+        "size": size  # 페이지당 결과 수 설정
     }
     try:
         response = es.search(index='history', body=body)

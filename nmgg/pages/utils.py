@@ -4,6 +4,7 @@ from django.conf import settings
 from dotenv import load_dotenv
 from elasticsearch import Elasticsearch, TransportError, ConnectionError, NotFoundError
 from elasticsearch.exceptions import NotFoundError, RequestError
+
 from bs4 import BeautifulSoup
 import os
 import argparse
