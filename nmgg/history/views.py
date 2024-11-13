@@ -3,10 +3,12 @@
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
 
 import json
 from .utils import *
 
+@require_http_methods(["POST"])
 @csrf_exempt
 def new_history_save(request):
     try:
@@ -39,6 +41,7 @@ def new_history_save(request):
     
     return JsonResponse(es_res_dict, status=201)
 
+@require_http_methods(["GET"])
 @csrf_exempt
 def history_full_list(request):
     try:
@@ -48,6 +51,7 @@ def history_full_list(request):
 
     return JsonResponse(full_list, safe=False)
 
+@require_http_methods(["GET"])
 @csrf_exempt
 def history_id_search(request, doc_id):
     try:
@@ -57,6 +61,7 @@ def history_id_search(request, doc_id):
     
     return JsonResponse(id_search_results, safe=False)
 
+@require_http_methods(["GET"])
 @csrf_exempt
 def history_text_search(request):
     try:
@@ -75,6 +80,7 @@ def history_text_search(request):
     
     return JsonResponse(text_search_results, safe=False)
 
+@require_http_methods(["GET"])
 @csrf_exempt
 def history_tag_search(request):
     try:
@@ -98,6 +104,7 @@ def history_tag_search(request):
     
     return JsonResponse(tag_search_results, safe=False)
 
+@require_http_methods(["GET"])
 @csrf_exempt
 def history_similar_search(request):
     try:

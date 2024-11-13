@@ -2,11 +2,14 @@
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+
 
 import json
 
 from .utils import *
 
+@require_http_methods(["POST"])
 @csrf_exempt
 def new_save(request):
     try:
@@ -46,6 +49,7 @@ def new_save(request):
     
     return JsonResponse(es_res_dict, status=201)
 
+@require_http_methods(["GET"])
 @csrf_exempt
 def full_list(request):
     try:
@@ -57,6 +61,7 @@ def full_list(request):
         return JsonResponse(full_list, status=400)
     return JsonResponse(full_list, safe=False)
 
+@require_http_methods(["GET"])
 @csrf_exempt
 def id_search(request, doc_id):
     try:
@@ -68,6 +73,7 @@ def id_search(request, doc_id):
         return JsonResponse(id_search_results, status=400)
     return JsonResponse(id_search_results, safe=False)
 
+@require_http_methods(["GET"])
 @csrf_exempt
 def tag_search(request):
     try:
@@ -93,6 +99,7 @@ def tag_search(request):
         return JsonResponse(tag_search_results, status=400)
     return JsonResponse(tag_search_results, safe=False)
 
+@require_http_methods(["GET"])
 @csrf_exempt
 def text_search(request):
     try:
@@ -113,6 +120,7 @@ def text_search(request):
         return JsonResponse(text_search_results, status=400)
     return JsonResponse(text_search_results, safe=False)
 
+@require_http_methods(["GET"])
 @csrf_exempt
 def similar_search(request):
     try:

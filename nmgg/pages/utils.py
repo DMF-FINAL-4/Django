@@ -13,6 +13,8 @@ import json
 import re
 import requests
 
+from django.conf import settings
+
 def validate_required_fields(data, required_fields):
     for field in required_fields:
         if field not in data:
