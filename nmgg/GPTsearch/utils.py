@@ -1,71 +1,282 @@
+# utils.py
+
 import openai
-import json
+from elasticsearch import Elasticsearch
 from django.conf import settings
 
-
-def analyze_user_question(user_question):
-    prompt = f"""
-    사용자가 Elasticsearch에 저장된 페이지에 대한 질문을 했습니다. 질문은 다음과 같습니다: "{user_question}"
-    
-    Elasticsearch 맵핑 구조는 다음과 같습니다:
-    - `title` (문서 제목)
-    - `author` (작성자)
-    - `content` (본문)
-    - `keywords` (키워드 리스트)
-    - `created_at` (작성 날짜)
-    
-    이 질문이 문서 리스트 요청인지, 특정 정보에 대한 답변인지 구분하세요.
-    1. 문서 리스트 요청이라면 적절한 Elasticsearch 쿼리를 생성하세요.
-    2. 특정 정보 요청이라면 질문과 관련된 내용을 찾기 위해 Elasticsearch에 적절한 쿼리를 작성하고, 상위 5개의 결과를 분석하여 가장 관련성 있는 문서의 ID를 반환하는 형태로 응답을 작성하세요.
-    """
+# GPT를 사용해 질문을 분석하고 적절한 ES 쿼리를 생성하는 함수
+def analyze_user_question(user_question, index_name):
     try:
+        openai.api_key = settings.OPENAI_API_KEY
+
+        if index_name = "pagse":
+            index_mapping = """
+                "mappings": {
+                    "properties": {
+                    "access_permission": {
+                        "type": "keyword"
+                    },
+                    "favicon": {
+                        "type": "keyword"
+                    },
+                    "host_domain": {
+                        "type": "keyword"
+                    },
+                    "host_name": {
+                        "type": "text",
+                        "analyzer": "korean_analyzer",
+                        "fields": {
+                        "raw": {
+                            "type": "keyword"
+                        }
+                        }
+                    },
+                    "alternate_url": {
+                        "type": "keyword"
+                    },
+                    "title": {
+                        "type": "text",
+                        "analyzer": "korean_analyzer",
+                        "fields": {
+                        "raw": {
+                            "type": "keyword"
+                        }
+                        }
+                    },
+                    "author": {
+                        "type": "text",
+                        "analyzer": "korean_analyzer",
+                        "fields": {
+                        "raw": {
+                            "type": "keyword"
+                        }
+                        }
+                    },
+                    "date": {
+                        "type": "date",
+                        "format": "yyyy-MM-dd"
+                    },
+                    "content": {
+                        "type": "text",
+                        "analyzer": "korean_analyzer"
+                    },
+                    "short_summary": {
+                        "type": "text",
+                        "analyzer": "korean_analyzer"
+                    },
+                    "long_summary": {
+                        "type": "text",
+                        "analyzer": "korean_analyzer"
+                    },
+                    "keywords": {
+                        "type": "keyword"
+                    },
+                    "category_keywords": {
+                        "type": "keyword"
+                    },
+                    "comments": {
+                        "type": "nested",
+                        "properties": {
+                        "author": {
+                            "type": "text",
+                            "analyzer": "korean_analyzer",
+                            "fields": {
+                            "raw": {
+                                "type": "keyword"
+                            }
+                            }
+                        },
+                        "content": {
+                            "type": "text",
+                            "analyzer": "korean_analyzer"
+                        },
+                        "date": {
+                            "type": "date",
+                            "format": "yyyy-MM-dd"
+                        }
+                        }
+                    },
+                    "image_links": {
+                        "type": "nested",
+                        "properties": {
+                        "caption": {
+                            "type": "text",
+                            "analyzer": "korean_analyzer"
+                        },
+                        "url": {
+                            "type": "keyword"
+                        }
+                        }
+                    },
+                    "links": {
+                        "type": "nested",
+                        "properties": {
+                        "caption": {
+                            "type": "text",
+                            "analyzer": "korean_analyzer"
+                        },
+                        "url": {
+                            "type": "keyword"
+                        }
+                        }
+                    },
+                    "media": {
+                        "type": "nested",
+                        "properties": {
+                        "caption": {
+                            "type": "text",
+                            "analyzer": "korean_analyzer"
+                        },
+                        "url": {
+                            "type": "keyword"
+                        }
+                        }
+                    },
+                    "file_download_links": {
+                        "type": "nested",
+                        "properties": {
+                        "caption": {
+                            "type": "text",
+                            "analyzer": "korean_analyzer"
+                        },
+                        "size": {
+                            "type": "keyword"
+                        },
+                        "url": {
+                            "type": "keyword"
+                        }
+                        }
+                    },
+                    "content_length": {
+                        "type": "integer"
+                    }
+                    }
+                }
+            """
+        elif index_name = "history":
+            index_mapping = """
+                "mappings": {
+                    "properties": {
+                    "url": {
+                        "type": "keyword"
+                    },
+                    "favicon": {
+                        "type": "keyword"
+                    },
+                    "title": {
+                        "type": "text",
+                        "analyzer": "korean-analyzer"
+                    },
+                    "content": {
+                        "type": "text",
+                        "analyzer": "korean-analyzer"
+                    }
+                    }
+                }
+            """
+        else return JsonResponse({'error': 'Invalid index type provided.'}, status=400)
+
+
+
+        prompt = f"""
+        사용자가 저장한 페이지들이 있는 Elasticsearch 인덱스에서 사용자의 요청에 따라 관련 항목을 찾으려고 합니다.
+        요청의 유형을 'ask_info', 'ask_list' 두가지로 분류하고 이를 위한 가장 적절한 query를 생성해 주세요.
+        추후 사용자에게는, 'ask_list'인 경우 쿼리를 통한 검색 결과가 제공될 것이며, 'ask_info'인 경우 쿼리를 통한 검색결과 상위 5개를 gpt가 분석하여 답변을 제공할 것입니다.
+        
+        사용자 요청: "{user_question}"
+        인덱스의 mapping: {index_mapping}
+
+
+        유형이 'ask_list'인 경우 query에 다음 처럼 하이라이트 highlight query옵션을 추가하세요.
+        {{"highlight": {{
+            "fields": {{
+                검색하는모든 필드 포함
+            }},
+            "pre_tags": ["<strong>"],
+            "post_tags": ["</strong>"]}}
+        }}
+
+
+        반드시 지켜야 할 최종 응답의 형식:
+        {{ "question_type" : "ask_info" 또는 "ask_list",
+            "query": 제공된 사용자 요청과 mapping에 적합한 Elasticsearch 8.15버전용 query
+        }}
+
+        """
+        
+
         response = openai.Completion.create(
-            model="gpt-4",
+            engine="gpt-4o-mini",
             prompt=prompt,
-            max_tokens=500,
+            max_tokens=1000,
             temperature=0.5
         )
-        return json.loads(response.choices[0].text.strip())
+        response_body = response.choices[0].text.strip()
+        return response_body
+    
     except Exception as e:
-        return {"error": f"Failed to get response from OpenAI: {str(e)}"}
+        return {"error": f"Failed to analyze question: {str(e)}"}
 
-
-def execute_es_query(query):
-    es = settings.ELASTICSEARCH
-    if not es:
-        return {"error": "Elasticsearch client not configured"}
-
+# Elasticsearch에서 쿼리를 실행하는 함수
+def execute_es_query(query, index_name):
     try:
-        response = es.search(index="pages", body=query)
+        es = Elasticsearch([settings.ELASTICSEARCH_URL])
+        if not es.ping():
+            raise ValueError("Elasticsearch connection failed")
+
+        response = es.search(index=index_name, body=query)
         hits = response.get('hits', {}).get('hits', [])
-        return hits
+        results = []
+        for hit in hits:
+            source = hit['_source']
+            document_id = hit['_id']
+            highlight = hit.get('highlight', {})
+            results.append({
+                "id": document_id,
+                "source": source,
+                "highlight": highlight
+            })
+        return results
     except Exception as e:
-        return {"error": f"Elasticsearch query failed: {str(e)}"}
+        return {"error": f"Failed to execute Elasticsearch query: {str(e)}"}
+
+# Elasticsearch 결과를 분석하여 가장 관련성 있는 문서 ID를 찾는 함수
+def analyze_es_results(query_results, user_question):
+ try:
+        openai.api_key = settings.OPENAI_API_KEY
 
 
-def analyze_es_results(hits):
-    # 상위 5개의 결과 분석
-    top_hits = hits[:5]
-    documents = [hit["_source"] for hit in top_hits]
+        top_5_query_results = []
+        for number in range(1,5):
+            top_5_query_results.append.qury_results.get[number]
 
-    # GPT에게 가장 관련성 높은 문서를 찾도록 요청
-    prompt = f"""
-    사용자의 질문에 가장 관련이 있는 문서를 찾고 있습니다.
-    질문: "{user_question}"
-    
-    다음은 5개의 관련 문서입니다:
-    {json.dumps(documents, ensure_ascii=False, indent=4)}
-    
-    이 중에서 질문에 가장 관련성 높은 문서의 ID를 반환해주세요.
-    """
-    try:
+
+        prompt = f"""
+        사용자가 저장한 페이지들이 있는 Elasticsearch 인덱스에서 관련 검색결과를 받아서 사용자의 요청에 따라 관련 내용을 찾으려 합니다.
+        사용자 요청에 적절한 답변을 자료검색 서포터로서 답변해.
+        예를 들어 '물어보신 무엇무엇은 무엇무엇입니다, 찾으시는 내용은 무엇무엇에 관한 내용인것 같습니다, 문서 무엇무엇(문서의 제목)에 이러이러한 내용이 있습니다, 요청하신 요약은 이러이러합니다' 와 비슷하게 간결하고 명확하게 서포팅해. 가급적 짧게 답변하고 긴 답변이 필요하더라도 최대 400자 이내로
+        그리고 요청과 가장 관련있는 검색결과의 id를 한개를 출력하세요. 만약 질문과 매우 밀접한 관련항목이 여러개라면 id 최대 3개를 출력하세요.
+
+        사용자 요청: "{user_question}"
+        검색 결과: ```
+            {top_5_query_results}
+            ```
+
+        반드시 지켜야 할 최종 응답의 형식:
+        {{  "anseur" : "사용자 요청에 대한 답변 문자열",
+            "rel_ids": {{'id1':'id를 문자열로', 'id2':'id를 문자열로'}}
+        }}
+
+        """
+
         response = openai.Completion.create(
-            model="gpt-4",
+            engine="gpt-4o-mini",
             prompt=prompt,
-            max_tokens=50,
+            max_tokens=1000,
             temperature=0.5
         )
-        document_id = response.choices[0].text.strip()
-        return document_id
+        response_body = response.choices[0].text.strip()
+        return response_body
+    
     except Exception as e:
-        return {"error": f"Failed to analyze ES results: {str(e)}"}
+        return {"error": f"Failed to analyze question: {str(e)}"}

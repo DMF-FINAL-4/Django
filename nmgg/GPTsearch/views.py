@@ -1,34 +1,42 @@
+# views.py
+
 from django.conf import settings
 from django.http import JsonResponse
 from .utils import analyze_user_question, execute_es_query, analyze_es_results
-import openai
+from django.views.decorators.csrf import csrf_exempt
+import json
 
-
+@csrf_exempt
 def handle_user_question(request):
     if request.method == 'POST':
-        user_question = request.POST.get('question')
-        if not user_question:
-            return JsonResponse({'error': 'No question provided'}, status=400)
+        try:
+            # 요청에서 데이터 추출
+            data = json.loads(request.body)
+            user_question = data.get('question')
+            index_type = data.get('index')
 
-        # Step 1: Use GPT to analyze the question and generate the appropriate ES query
-        analysis = analyze_user_question(user_question)
+            # Step 1: Use GPT to analyze the question and generate the appropriate ES query
+            analysis = analyze_user_question(user_question, index_name)
 
-        if "error" in analysis:
-            return JsonResponse(analysis, status=500)
+            if "error" in analysis:
+                return JsonResponse(analysis, status=500)
 
-        # Step 2: Execute the Elasticsearch query
-        query = analysis.get("query")
-        query_results = execute_es_query(query)
+            # Step 2: Execute the Elasticsearch query
+            query = analysis.get("query")
+            query_results = execute_es_query(query, index_name)
 
-        if "error" in query_results:
-            return JsonResponse(query_results, status=500)
+            if "error" in query_results:
+                return JsonResponse(query_results, status=500)
 
-        # Step 3: Process the Elasticsearch results based on question type
-        if analysis.get("type") == "list":
-            return JsonResponse({"query": query, "results": query_results}, status=200)
-        elif analysis.get("type") == "info":
-            # Analyze results and get the most relevant document ID
-            relevant_doc_id = analyze_es_results(query_results)
-            return JsonResponse({"relevant_document_id": relevant_doc_id}, status=200)
+            # Step 3: Process the Elasticsearch results based on question type
+            if analysis.get("question_type") == "list":
+                return JsonResponse({"results": query_results}, status=200)
+            elif analysis.get("question_type") == "info":
+                # Analyze results and get the most relevant document ID
+                relevant_doc_id = analyze_es_results(query_results, user_question)
+                return JsonResponse({"relevant_document_id": relevant_doc_id}, status=200)
+
+        except Exception as e:
+            return JsonResponse({'error': f'Error processing request: {str(e)}'}, status=500)
 
     return JsonResponse({'error': 'Invalid request method'}, status=405)
