@@ -22,4 +22,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('pages/', include('pages.urls'), name='pages'),
     path('history/', include('history.urls'), name='history'),
+    path('gpt_search/', include('GPTseatch.urls'), name='gpt_search'),
 ]
