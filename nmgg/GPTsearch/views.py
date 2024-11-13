@@ -1,5 +1,3 @@
-# views.py
-
 from django.conf import settings
 from django.http import JsonResponse
 from .utils import analyze_user_question, execute_es_query, analyze_es_results
@@ -14,6 +12,14 @@ def handle_user_question(request):
             data = json.loads(request.body)
             user_question = data.get('question')
             index_type = data.get('index')
+
+            # 인덱스 선택에 따른 분기 처리
+            if index_type == 'post':
+                index_name = 'posts'
+            elif index_type == 'history':
+                index_name = 'history'
+            else:
+                return JsonResponse({'error': 'Invalid index type provided.'}, status=400)
 
             # Step 1: Use GPT to analyze the question and generate the appropriate ES query
             analysis = analyze_user_question(user_question, index_name)
