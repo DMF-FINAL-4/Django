@@ -1,3 +1,4 @@
+#settings.py
 
 # BASE_DIR 설정
 from pathlib import Path
@@ -74,7 +75,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'pages',
-    # 'summariz',
+    'history',
+    'GPTsearch',
     'corsheaders', # CORS를 허용하기위해
 ]
 

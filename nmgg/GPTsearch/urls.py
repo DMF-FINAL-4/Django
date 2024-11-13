@@ -1,6 +1,8 @@
+#GPTsearch/urls.py
+
 from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('handle_user_question/', views.handle_user_question, name='handle_user_question'),
+    path('gpt_search/', views.gpt_search, name='gpt_search'),
 ]

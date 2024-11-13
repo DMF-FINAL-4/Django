@@ -1,4 +1,5 @@
-# utils.py for history app
+# history/utils.py
+
 from django.conf import settings
 from bs4 import BeautifulSoup
 from elasticsearch import Elasticsearch, NotFoundError, RequestError

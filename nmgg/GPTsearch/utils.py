@@ -1,3 +1,5 @@
+#GPTsearch/utils.py
+
 import openai
 from elasticsearch import Elasticsearch
 from django.conf import settings
@@ -7,7 +9,7 @@ def analyze_user_question(user_question, index_name):
     try:
         openai.api_key = settings.OPENAI_API_KEY
 
-        if index_name = "pagse":
+        if index_name == "pagse":
             index_mapping = """
                 "mappings": {
                     "properties": {
@@ -151,7 +153,7 @@ def analyze_user_question(user_question, index_name):
                     }
                 }
             """
-        elif index_name = "history":
+        elif index_name == "history":
             index_mapping = """
                 "mappings": {
                     "properties": {
@@ -172,7 +174,8 @@ def analyze_user_question(user_question, index_name):
                     }
                 }
             """
-        else return JsonResponse({'error': 'Invalid index type provided.'}, status=400)
+        else:
+            return JsonResponse({'error': 'Invalid index type provided.'}, status=400)
 
         prompt = f"""
         사용자가 저장한 페이지들이 있는 Elasticsearch 인덱스에서 사용자의 요청에 따라 관련 항목을 찾으려고 합니다.

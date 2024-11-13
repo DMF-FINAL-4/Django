@@ -1,3 +1,5 @@
+# GPTsearch/views.py
+
 from django.conf import settings
 from django.http import JsonResponse
 from .utils import analyze_user_question, execute_es_query, analyze_es_results
@@ -5,7 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 
 @csrf_exempt
-def handle_user_question(request):
+def gpt_search(request):
     if request.method == 'POST':
         try:
             # 요청에서 데이터 추출
