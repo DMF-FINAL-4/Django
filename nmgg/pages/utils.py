@@ -1,4 +1,4 @@
-# # pages/utils.py
+# pages/utils.py
 
 from django.conf import settings
 from dotenv import load_dotenv
@@ -225,7 +225,13 @@ def upload_to_elasticsearch(processed_json, index='pages', pipeline='add_created
     except Exception as e:
         raise RuntimeError(f"Elasticsearch 업로드 오류: {str(e)}")
 
-def search_full_list():
+def search_full_list(page=0, size=10):
+    """
+    전체 목록을 페이징하여 검색합니다.
+    :param page: 페이지 번호 (0부터 시작)
+    :param size: 한 페이지에 포함될 문서 수
+    :return: 검색된 문서 리스트
+    """
     es = get_elasticsearch_client()
     body = {
         "_source": ["alternate_url", "favicon", "title", "keywords", "created_at"],
@@ -238,7 +244,9 @@ def search_full_list():
                     "order": "desc"
                 }
             }
-        ]
+        ],
+        "from": page * size,  # 시작 지점 설정
+        "size": size  # 페이지당 결과 수 설정
     }
     try:
         response = es.search(index='pages', body=body)
