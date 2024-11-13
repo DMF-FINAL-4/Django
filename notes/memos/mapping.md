@@ -1,70 +1,157 @@
-- 접근권한 (access_permission) : 만약 접근에 제한이 있는 페이지로 확인된다면 'HTTP 상태 코드', '없는 페이지', '로그인 필요' 등의 적절한 항목을 출력. 문제가 없다면 '정상'을 출력
-- 파비콘(favicon) : 파비콘의 호스트 도메인을 포함한 전체 경로를 저장, 민약 여러개라면 가장 큰 이미지의 것을 1개만 저장
-- 호스트 도메인 (host_domain) :
-- 호스트 이름 (host_name) : 호스트의 이름을 한글로 출력, 한글이 없다면 영어로 출력 (예시: 네이버 뉴스, 페이스북, 위키백과)
-- 대체 url (alternate_url) : Canonical URL 또는 Open Graph URL이 존재 한다면 이곳에 표시
-- 제목 (title) : 각종 정보를 종합한 제목 (예시: '동아일보｜[이철희 칼럼] 형제애로 마련한 400억…감사 전한 튀르키예')
-- 작성자 (author) : 본문의 작성자
-- 작성일 (date) : 페이지의 작성일
-- 본문 (content) : 명백한 오타 수정을 제외한 텍스트 외곡이 없으며, 표 내부의 내용 등을 포함한 누락 없는 본문
-- 짧은 요약 (short_summary) : 본문을 20자에서 90자로 사이로 요약
-- 긴 요약 (long_summary) : 본문을 200자에서 400자 사이로 요약
-- 키워드 (keywords) : 본문의 키워드들 내용이 길고 요소가 많다면 키워드들이 아주 많아져도 좋아
-- 유형 키워드 (category_keywords) : 블로그, 카페, 기사, 정보, 사연, 에세이, 영상, 사진, 리뷰, 쇼핑, sns 등 유형이라 할 수 있는 키워드들 풍부하게
-- 댓글 (comments) : 댓글이 있다면 '작성자 | 댓글내용 | 작성시간' 형식으로 저장
-- 이미지 링크 (image_links) : 주요 이미지들의 링크 주소 {{"이미지캡션" : "이미지링크url"}} 딕셔너리 형식으로 저장
-- 링크(links) : 본문 내에 주요한 외부 또는 내부 링크들이 있을경우 {{"캡션" : "링크url"}} 딕셔너리 형식으로 저장
-- 비디오 및 오디오(media) : 본문 내에 미디어가 있을경우 {{"캡션" : "링크url"}} 딕셔너리 형식으로 저장
-- 파일 다운로드 링크(file_download_links) : 주요한 PDF, 이미지, 문서 등의 다운로드 링크가 있을경우 {{"파일제목 | 파일 크기": "링크url"}} 딕셔너리 형식으로 저장
-- 콘텐츠의 길이(content_length) : 콘텐츠를 읽는데 걸리는 시간을 예측 1분 단위로
-
-JSON 형식 프롬프트 예시:
-{{
-    "access_permission": "정상",
-    "favicon" : "https://www.example.com/favicon.ico"
-    "host_domain": "example.com",
-    "host_name": "네이버 뉴스",
-    "alternate_url": "https://www.example.com/page-url",
-    "title": "제목",
-    "author": "작성자",
-    "date": "YYYY-MM-DD",
-    "content": "본문 내용",
-    "short_summary": "본문을 20자에서 90자로 요약한 내용",
-    "long_summary": "본문을 200자에서 400자로 요약한 내용",
-    "keywords": ["키워드1", "키워드2"],
-    "category_keywords": ["블로그", "카페"],
-    "comments": ["작성자1 | 댓글내용1 | YYYY-MM-DD", "작성자2 | 댓글내용2 | YYYY-MM-DD"],
-    "image_links": {{"이미지캡션1": "https://example.com/image1.jpg", "이미지캡션2": "https://example.com/image2.jpg" }},
-    "links": {{"캡션1": "https://example.com/image1.jpg", "캡션2": "https://example.com/image2.jpg" }},
-    "media_links": {{"캡션1": "https://example.com/image1.jpg", "캡션2": "https://example.com/image2.jpg" }},
-    "file_download_links": {{"캡션1 | 10MB": "https://example.com/image1.jpg", "캡션2 | 1.1GB": "https://example.com/image2.jpg" }},
-    "content_length": "MM"
-}}
-
-실제파일 예시:
 {
-    "access_permission": "정상",
-    "favicon": "https://ssl.pstatic.net/static.news/image/news/m/2023/08/21/favicon.ico",
-    "host_domain": "n.news.naver.com",
-    "host_name": "네이버 뉴스",
-    "alternate_url": "https://news.naver.com/main/read.naver?mode=LSD&mid=sec&oid=011&aid=0004412785&sid1=001",
-    "title": "尹 지지율, 17% '역대 최저'…\"대국민사과 반향은 지켜봐야\"",
-    "author": "이승배 기자",
-    "date": "2024-11-08",
-    "content": "[한국갤럽 정기 여론조사]尹정부 7분야 정책평가서 '부정' 우세차기 지도자 1위에 이재명···2위 한동훈국힘 29%·민주 36% \" 격차 올들어 최고\"윤석열 대통령의 지지율이 8일 발표된 한국갤럽 여론조사에서 17%를 기록하며 집권 이후 최저치를 또다시 경신했다. 지난주 처음으로 20%대가 붕괴된 이후 여권의 위기감이 커지면서 당정이 갈등을 자제하고, 윤 대통령이 대국민 사과에 나섰지만 지지율 회복에 별다 른 보탬이 되지 못했다. 이번 조사에는 전날(7일) 윤 대통령의 대국민담화 및 기자회견에 따른 여론이 일부 반영됐다.한국갤럽이 이달 5~7일  전국 만18세 이상 유권자 1002명을 대상으로 조사한 결과 윤 대통령의 직무수행에 대한 긍정평가는 17%를 기록했다. 부정평가는 74%였다.지난 2022년 5월 윤 대통령이 취임한 이후 긍정평가는 최저치, 부정평가는 최고치다. 지난주 조사와 비교해 긍정평가는 2%포인트 떨어졌고, 부정평 가는 2%포인트 올랐다.윤 대통령을 긍정평가한 이유로는 ‘외교’가 23%로 가장 많았고 △경제·민생 9% △주관·소신 7% △결단력·추진력·뚝심 6% 등이 뒤를 이었다. 부정평가 최대 이유로는 ‘김건희 여사 문제’(19%)가 꼽혔다. 이외 △경제·민생·물가 11% △소통 미흡 9% △전반적으로 잘못한다 7% 순이었다.대부분 응답자 특성에서 부정평가가 우세했다. 윤 대통령의 지지세가 강고한 대구·경북(TK) 지역에서 긍정평가는 23%에 그쳤고,  부정평가 비율이 63%였다. 70%대 이상층에서도 긍정평가는 34%, 부정평가는 50%였다. 본인이 국민의힘 지지층이라고 밝힌 응답자 중에서는 긍 정평가가 47%, 부정평가는 44%였다.다만 해당 조사에는 윤 대통령이 고개를 숙여 사과한 전일 대국민담화 및 기자회견 결과가 충분히 반영되지 않았다는 설명이다. 한국갤럽은 “조사 기간 사흘 중 마지막 날인 7일 오전 윤 대통령이 대국민담화·기자회견을 했다”며 “그 반향은 더 지켜봐야 알 수 있을 것”이라고 밝혔다.",
-    "short_summary": "윤석열 대통령의 지지율이 17%로 최저치를 기록했다.",
-    "long_summary": "윤석열 대통령의 지지율이 8일 발표된 한국갤럽 여론조사에서 17%를 기록하며 집권 이후 최저치를 경신했다. 여권의 위 기감이 커지면서 당정이 갈등을 자제하고, 윤 대통령이 대국민 사과에 나섰지만 지지율 회복에 별다른 효과가 없었다. 긍정평가는 17%, 부정평가는 74%로, 긍정평가는 최저치, 부정평가는 최고치를 기록했다. 긍정평가의 주된 이유는 외교(23%)였으며, 부정평가는 김건희 여사 문제(19%)가 가장 큰 이유로 지적되었다.",
-    "keywords": ["윤석열", "지지율", "한국갤럽", "여론조사", "대국민 사과"],
-    "category_keywords": ["기사", "정치", "여론조사"],
-    "comments": [],
-    "image_links": {
-        "대통령이 7일 오전 서울 용산 대통령실 청사 브리핑실에서 열린 '대국민담화 및 기자회견'에서 취재진의 질문에 답하고 있다. 연합뉴스": "https://imgnews.pstatic.net/image/011/2024/11/08/0004412785_001_20241108112117062.jpg?type=w860"
-    },
-    "links": {
-        "기사원문": "https://www.sedaily.com/NewsView/2DGRKESXX9"
-    },
-    "media_links": {},
-    "file_download_links": {},
-    "content_length": "5"
+  "settings": {
+    "index": {
+      "number_of_shards": "1",
+      "number_of_replicas": "1",
+      "analysis": {
+        "analyzer": {
+          "korean_analyzer": {
+            "type": "nori",
+            "decompound_mode": "mixed"
+          }
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "access_permission": {
+        "type": "keyword"
+      },
+      "favicon": {
+        "type": "keyword"
+      },
+      "host_domain": {
+        "type": "keyword"
+      },
+      "host_name": {
+        "type": "text",
+        "analyzer": "korean_analyzer",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
+      },
+      "alternate_url": {
+        "type": "keyword"
+      },
+      "title": {
+        "type": "text",
+        "analyzer": "korean_analyzer",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
+      },
+      "author": {
+        "type": "text",
+        "analyzer": "korean_analyzer",
+        "fields": {
+          "raw": {
+            "type": "keyword"
+          }
+        }
+      },
+      "date": {
+        "type": "date",
+        "format": "yyyy-MM-dd"
+      },
+      "content": {
+        "type": "text",
+        "analyzer": "korean_analyzer"
+      },
+      "short_summary": {
+        "type": "text",
+        "analyzer": "korean_analyzer"
+      },
+      "long_summary": {
+        "type": "text",
+        "analyzer": "korean_analyzer"
+      },
+      "keywords": {
+        "type": "keyword"
+      },
+      "category_keywords": {
+        "type": "keyword"
+      },
+      "comments": {
+        "type": "nested",
+        "properties": {
+          "author": {
+            "type": "text",
+            "analyzer": "korean_analyzer",
+            "fields": {
+              "raw": {
+                "type": "keyword"
+              }
+            }
+          },
+          "content": {
+            "type": "text",
+            "analyzer": "korean_analyzer"
+          },
+          "date": {
+            "type": "date",
+            "format": "yyyy-MM-dd"
+          }
+        }
+      },
+      "image_links": {
+        "type": "nested",
+        "properties": {
+          "caption": {
+            "type": "text",
+            "analyzer": "korean_analyzer"
+          },
+          "url": {
+            "type": "keyword"
+          }
+        }
+      },
+      "links": {
+        "type": "nested",
+        "properties": {
+          "caption": {
+            "type": "text",
+            "analyzer": "korean_analyzer"
+          },
+          "url": {
+            "type": "keyword"
+          }
+        }
+      },
+      "media": {
+        "type": "nested",
+        "properties": {
+          "caption": {
+            "type": "text",
+            "analyzer": "korean_analyzer"
+          },
+          "url": {
+            "type": "keyword"
+          }
+        }
+      },
+      "file_download_links": {
+        "type": "nested",
+        "properties": {
+          "caption": {
+            "type": "text",
+            "analyzer": "korean_analyzer"
+          },
+          "size": {
+            "type": "keyword"
+          },
+          "url": {
+            "type": "keyword"
+          }
+        }
+      },
+      "content_length": {
+        "type": "integer"
+      }
+    }
+  }
 }
-
