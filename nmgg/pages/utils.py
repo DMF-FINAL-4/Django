@@ -31,8 +31,8 @@ def classify_request(request):
     if request['url'] and request['html']:
         if not request['duplicates']:
             url = request['url']
-            es_res = search_page_by_tkm('url', url, 'term')
-            if es_res.get('hits', {}).get('total', {}).get('value', 0) > 0:
+            es_res = search_by_tkm("url", url, "term")
+            if not es_res == []:
                 hits = es_res.get('hits', {}).get('hits', [])
                 results = [{"id": hit.get("_id"), **hit.get("_source", {})} for hit in hits]
                 return results
@@ -69,11 +69,12 @@ class HTMLSummariz:
 
         except Exception as e:
             raise RuntimeError(f"HTML 태그 정제 중 오류 발생: {str(e)}")
+    
 
     def extract_information_with_gpt(self, cleaned_html):
+        # 앞뒤로 백틱이나 '```jsom' 과 같은 텍스트를 사용하지 않고, 그 자체로
         prompt = f"""
-        아래는 정제된 웹 페이지의 HTML입니다. 이 HTML에서 다음 정보를 추출하여 **유효한 JSON 형식으로만** 반환하세요. 다른 텍스트나 설명은 포함하지 마세요.:
-
+        아래는 정제된 웹 페이지의 HTML입니다. 이 HTML에서 다음 정보를 추출하여 **유효한 JSON 형식으로만 반환**하세요. 그 외 다른 텍스트나 설명은 포함하지 마세요.:
         - 접근권한 (access_permission): 만약 접근에 제한이 있는 페이지로 확인된다면 'HTTP 상태 코드', '없는 페이지', '로그인 필요' 등의 적절한 항목을 출력하고, 문제가 없다면 '정상'을 출력합니다.
         - 파비콘 (favicon): 파비콘의 호스트 도메인을 포함한 전체 경로를 저장하며, 만약 여러 개라면 가장 큰 이미지의 것 한 개만 저장합니다.
         - 호스트 도메인 (host_domain): 페이지의 호스트 도메인을 저장합니다.
@@ -83,16 +84,16 @@ class HTMLSummariz:
         - 작성자 (author): 본문의 작성자를 출력합니다.
         - 작성일 (date): 페이지의 작성일을 `yyyy-MM-dd` 형식으로 출력합니다.
         - 본문 (content): 명백한 오타 수정을 제외한 텍스트 왜곡이 없으며, 표 내부의 내용 등을 포함한 누락 없는 본문을 출력합니다.
-        - 짧은 요약 (short_summary): 본문을 20자에서 90자 사이로 요약합니다.
-        - 긴 요약 (long_summary): 본문을 200자에서 400자 사이로 요약합니다.
+        - 짧은 요약 (short_summary): 본문을 한글로 20자에서 90자 사이로 요약합니다.
+        - 긴 요약 (long_summary): 본문을 한글로 200자에서 400자 사이로 요약합니다.
         - 키워드 (keywords): 본문의 키워드들을 출력합니다. 내용이 많고 주제가 폭넓다면 키워드가 많아져도 좋습니다.
-        - 유형 키워드 (category_keywords): 블로그, 카페, 기사, 정보, 사연, 에세이, 영상, 사진, 리뷰, 쇼핑, SNS 등 유형이라 할 수 있는 키워드들을 풍부하게 출력합니다.
+        - 유형 키워드 (category_keywords): 블로그, 카페, 기사, 정보, 사연, 에세이, 영상, 사진, 리뷰, 쇼핑, SNS, 커뮤니티, 자료실 등 그외 유형이라 할 수 있는 키워드들을 풍부하게 출력합니다.
         - 댓글 (comments): 댓글이 있다면 예시의 형식에 따라 모두 저장합니다.
         - 이미지 링크 (image_links): 본문 이미지를 예시의 형식에 따라 모두 저장합니다.
         - 링크 (links): 본문 내에 주요한 외부 또는 내부 링크들이 있을 경우 예시의 형식에 따라 모두 저장합니다.
         - 미디어 링크 (media_links): 본문 내에 비디오 및 오디오 등의 미디어가 있을 경우 예시의 형식에 따라 모두 저장합니다.
         - 파일 다운로드 링크 (file_download_links): 주요한 PDF, 이미지, 문서 등의 다운로드 링크가 있을 경우 예시의 형식에 따라 모두 저장합니다.
-        - 콘텐츠의 길이 (content_length): 콘텐츠를 읽는 데 걸리는 시간을 예측하여 분 단위로 출력합니다. (예시: "2")
+        - 콘텐츠의 길이 (content_length): 콘텐츠를 읽는 데 걸리는 예상 시간을 분 단위로 출력합니다. (예시: "2")
 
         HTML:
         \"\"\"
@@ -115,58 +116,58 @@ class HTMLSummariz:
             "keywords": ["키워드1", "키워드2"],
             "category_keywords": ["블로그", "카페"],
             "comments": [
-                {
+                {{
                     "author": "작성자1",
                     "content": "댓글내용1",
                     "date": "yyyy-MM-dd"
-                },
-                {
+                }},
+                {{
                     "author": "작성자2",
                     "content": "댓글내용2",
                     "date": "yyyy-MM-dd"
-                }
+                }}
             ],
             "image_links": [
-                {
+                {{
                     "caption": "이미지캡션1",
                     "url": "https://example.com/image1.jpg"
-                },
-                {
+                }},
+                {{
                     "caption": "이미지캡션2",
                     "url": "https://example.com/image2.jpg"
-                }
+                }}
             ],
             "links": [
-                {
+                {{
                     "caption": "캡션1",
                     "url": "https://example.com/link1.html"
-                },
-                {
+                }},
+                {{
                     "caption": "캡션2",
                     "url": "https://example.com/link2.html"
-                }
+                }}
             ],
             "media": [
-                {
+                {{
                     "caption": "캡션1",
                     "url": "https://example.com/video1.mp4"
-                },
-                {
+                }},
+                {{
                     "caption": "캡션2",
                     "url": "https://example.com/audio1.mp3"
-                }
+                }}
             ],
             "file_download_links": [
-                {
+                {{
                     "caption": "파일제목1",
                     "size": "10MB",
                     "url": "https://example.com/file1.pdf"
-                },
-                {
+                }},
+                {{
                     "caption": "파일제목2",
                     "size": "1.1GB",
                     "url": "https://example.com/file2.zip"
-                }
+                }}
             ],
             "content_length": m
         }}
@@ -183,7 +184,6 @@ class HTMLSummariz:
                 timeout=30
             )
             extracted_info = response['choices'][0]['message']['content'].strip()
-            print('GPT 정돈완료')
             print(extracted_info)
             return extracted_info
 
@@ -192,13 +192,23 @@ class HTMLSummariz:
 
     def GPT_to_json(self, extracted_info):
         try:
-            if extracted_info.startswith('```') and extracted_info.endswith('```'):
-                extracted_info = extracted_info[3:-3].strip()
-            processed_data = json.loads(extracted_info)
+
+            start = extracted_info.find('{')
+            end = extracted_info.rfind('}')
+    
+            # '{'와 '}'가 모두 존재하고, '{'가 '}'보다 앞에 있을 때
+            if start != -1 and end != -1 and start < end:
+                extracted_info = extracted_info[start:end+1]
+                processed_data = json.loads(extracted_info)
+            else:
+                raise ValueError(f"GPT 응답이 유효한 JSON 형식이 아닙니다: {str(e)}")
+            print('백틱 점검완료')
+            # if extracted_info.startswith('```') and extracted_info.endswith('```'):
+            #     extracted_info = extracted_info[3:-3].strip()
+            # processed_data = json.loads(extracted_info)
             if 'date' in processed_data:
                 if not re.match(r'\d{4}-\d{2}-\d{2}', processed_data['date']):
                     processed_data['date'] = '0001-01-01'
-            print(processed_data)
             return processed_data
 
         except json.JSONDecodeError as e:
@@ -206,8 +216,11 @@ class HTMLSummariz:
 
     def process(self, raw_html):
         try:
+            print('process 시작')
             cleaned_html = self.clean_html_style_tags(raw_html)
+            print('clean_html_style_tags 완료')
             extracted_info = self.extract_information_with_gpt(cleaned_html)
+            print('extract_information_with_gpt')
             processed_data = self.GPT_to_json(extracted_info)
             print('process 완료')
             return processed_data
@@ -228,7 +241,7 @@ def upload_to_elasticsearch(processed_json, index='pages', pipeline='add_created
     except Exception as e:
         raise RuntimeError(f"Elasticsearch 업로드 오류: {str(e)}")
 
-def search_full_list(page=0, size=10):
+def search_full_list(page=0, size=50):
     """
     전체 목록을 페이징하여 검색합니다.
     :param page: 페이지 번호 (0부터 시작)
@@ -237,7 +250,7 @@ def search_full_list(page=0, size=10):
     """
     es = get_elasticsearch_client()
     body = {
-        "_source": ["alternate_url", "favicon", "title", "keywords", "created_at"],
+        "_source": ["alternate_url", "favicon", "title", "keywords", "created_at", "author", "date", "short_summary", "host_domain"],
         "query": {
             "match_all": {}
         },
@@ -274,6 +287,38 @@ def search_by_id(doc_id):
         return {"error": f"Document with ID {doc_id} not found."}
     except RequestError as e:
         return {"error": f"Failed to fetch document due to request error: {str(e)}"}
+    except Exception as e:
+        return {"error": f"An unexpected error occurred: {str(e)}"}
+
+def delete_by_id(doc_id):
+    es = get_elasticsearch_client()
+    try:
+        # 먼저 문서를 가져와서 삭제 전의 데이터를 저장합니다.
+        response = es.get(index='pages', id=doc_id)
+        id_search_results = response["_source"]
+        id_search_results["id"] = response["_id"]
+        
+        # 문서를 삭제합니다.
+        delete_response = es.delete(index='pages', id=doc_id)
+        print('삭제 요청 완료')
+        
+        # 삭제 결과를 확인합니다.
+        if delete_response.get('result') == 'deleted':
+            print('삭제 결과 확인')
+            return {
+                "message": f"Document with ID {doc_id} successfully deleted.",
+                "deleted_document": id_search_results
+            }
+        else:
+            return {
+                "error": f"Failed to delete document with ID {doc_id}.",
+                "details": delete_response
+            }
+    
+    except NotFoundError:
+        return {"error": f"Document with ID {doc_id} not found."}
+    except RequestError as e:
+        return {"error": f"Failed to delete document due to request error: {str(e)}"}
     except Exception as e:
         return {"error": f"An unexpected error occurred: {str(e)}"}
 

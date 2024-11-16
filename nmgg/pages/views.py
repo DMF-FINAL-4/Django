@@ -16,34 +16,40 @@ def new_save(request):
         data = json.loads(request.body)
     except json.JSONDecodeError:
         return JsonResponse({"error": "Invalid JSON"}, status=400)
-    
+    print('요청 분류 시작')
     try:
-        classification = classify_response(data)
+        classification = classify_request(data)
     except ValueError as e:
         return JsonResponse({"error": str(e)}, status=400)
     except RuntimeError as e:
         return JsonResponse({"error": str(e)}, status=500)
+    print('요청 분류 완료')
     
     if classification:
         # 중복이 있는 경우, 중복된 문서 리스트 반환
+        print('중복 알림 반환')
         return JsonResponse({
             "error": "Duplicate content found",
             "duplicates": classification
         }, status=400)
-    
+        
+    print('중복 테스트 완료')
     # 중복이 없는 경우 진행
     raw_html = data.get('html')
+    
     if not raw_html:
         return JsonResponse({"error": "HTML content is required"}, status=400)
-    
+    print('raw_html 준비 완료')
     html_summarizer = HTMLSummariz()
     summariz_json = html_summarizer.process(raw_html)
     
     if 'error' in summariz_json:
+        print(f'오류 : {summariz_json}')
         return JsonResponse(summariz_json, status=500)
     
     try:
         es_res_dict = upload_to_elasticsearch(summariz_json)
+        print('upload_to_elasticsearch 완료')
     except RuntimeError as e:
         return JsonResponse({"error": str(e)}, status=500)
     
@@ -51,9 +57,9 @@ def new_save(request):
 
 @require_http_methods(["GET"])
 @csrf_exempt
-def full_list(request):
+def full_list(request, list_no):
     try:
-        full_list = search_full_list()
+        full_list = search_full_list(page=list_no)
     except RuntimeError as e:
         return JsonResponse({"error": str(e)}, status=500)
 
@@ -61,17 +67,30 @@ def full_list(request):
         return JsonResponse(full_list, status=400)
     return JsonResponse(full_list, safe=False)
 
-@require_http_methods(["GET"])
+
 @csrf_exempt
 def id_search(request, doc_id):
-    try:
-        id_search_results = search_by_id(doc_id)
-    except RuntimeError as e:
-        return JsonResponse({"error": str(e)}, status=500)
+    if request.method == 'GET':
+        try:
+            id_search_results = search_by_id(doc_id)
+        except RuntimeError as e:
+            return JsonResponse({"error": str(e)}, status=500)
+        
+        if isinstance(id_search_results, dict) and 'error' in id_search_results:
+            return JsonResponse(id_search_results, status=400)
+        return JsonResponse(id_search_results, safe=False)
+    elif request.method == 'DELETE':
+        print('삭제요청확인')
+        try:
+            delete_results = delete_by_id(doc_id)
+        except RuntimeError as e:
+            return JsonResponse({"error": str(e)}, status=500)
+        if isinstance(delete_results, dict) and 'error' in delete_results:
+            return JsonResponse(delete_results, status=400)
+        return JsonResponse(delete_results, status=200)
     
-    if isinstance(id_search_results, dict) and 'error' in id_search_results:
-        return JsonResponse(id_search_results, status=400)
-    return JsonResponse(id_search_results, safe=False)
+    else:
+        return JsonResponse({"error": "Invalid HTTP method"}, status=405)
 
 @require_http_methods(["GET"])
 @csrf_exempt

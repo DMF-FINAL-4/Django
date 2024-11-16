@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+        // 다중 줄 문자열을 템플릿 리터럴로 정의
+        const htmlContent = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>AI 기술 혁신 뉴스</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .headline {
+            color: #333;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+        }
+        .article-info {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+        }
+        .article-image {
+            max-width: 100%;
+            height: auto;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <article>
+        <h1 class="headline">AI 기술, 의료 분야에서 혁신적 발전 이뤄</h1>
+        
+        <div class="article-info">
+            <span>작성자: 김기자</span> | 
+            <span>작성일: 2024년 11월 16일</span> | 
+            <span>분류: 기술 뉴스</span>
+        </div>
+
+        <img src="ai-medical.jpg" alt="AI 의료 기술 이미지" class="article-image">
+
+        <p>
+            최근 인공지능(AI) 기술이 의료 분야에서 획기적인 발전을 이루고 있습니다. 
+            특히 질병 진단과 예측 분야에서 AI의 정확성이 인간 의사의 수준을 뛰어넘고 있습니다.
+        </p>
+
+        <p>
+            주요 연구 결과에 따르면, AI 알고리즘은 복잡한 의료 영상을 초고속으로 분석하여 
+            암과 같은 심각한 질병의 조기 진단 가능성을 크게 높였습니다.
+        </p>
+
+        <h2>주요 연구 성과</h2>
+        <ul>
+            <li>영상 진단 정확도 95% 달성</li>
+            <li>질병 조기 예측 시간 50% 단축</li>
+            <li>의료진 업무 효율성 대폭 개선</li>
+        </ul>
+
+        <blockquote>
+            "AI 기술은 의료의 미래를 바꿀 것입니다." - 의료 AI 연구소장
+        </blockquote>
+
+        <footer>
+            <p>© 2024 기술 뉴스 미디어</p>
+        </footer>
+    </article>
+</body>
+</html>`;
+
+        fetch('http://127.0.0.1:8000/pages/new_save/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                url: 'https://www.news.com/ex/1234455132314/123123', 
+                duplicates: true, 
+                html: htmlContent
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Success:', data);
+            // 추가적인 성공 처리 로직
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+            // 추가적인 오류 처리 로직
+        });
+    </script>
+</body>
+</html>
