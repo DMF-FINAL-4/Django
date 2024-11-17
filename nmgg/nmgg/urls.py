@@ -22,5 +22,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('pages/', include('pages.urls'), name='pages'),
     path('history/', include('history.urls'), name='history'),
-    path('gpt_search/', include('GPTsearch.urls'), name='gpt_search'),
+    path('ai_search/', include('GPTsearch.urls'), name='ai_search'),
 ]

@@ -92,7 +92,7 @@ def id_search(request, doc_id):
     else:
         return JsonResponse({"error": "Invalid HTTP method"}, status=405)
 
-@require_http_methods(["GET"])
+@require_http_methods(["POST"])
 @csrf_exempt
 def tag_search(request):
     try:
@@ -118,7 +118,7 @@ def tag_search(request):
         return JsonResponse(tag_search_results, status=400)
     return JsonResponse(tag_search_results, safe=False)
 
-@require_http_methods(["GET"])
+@require_http_methods(["POST"])
 @csrf_exempt
 def text_search(request):
     try:
@@ -137,6 +137,7 @@ def text_search(request):
     
     if isinstance(text_search_results, dict) and 'error' in text_search_results:
         return JsonResponse(text_search_results, status=400)
+    # print(text_search_results)
     return JsonResponse(text_search_results, safe=False)
 
 @require_http_methods(["GET"])

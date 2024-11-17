@@ -75,44 +75,39 @@ class HTMLSummariz:
         # 앞뒤로 백틱이나 '```jsom' 과 같은 텍스트를 사용하지 않고, 그 자체로
         prompt = f"""
         아래는 정제된 웹 페이지의 HTML입니다. 이 HTML에서 다음 정보를 추출하여 **유효한 JSON 형식으로만 반환**하세요. 그 외 다른 텍스트나 설명은 포함하지 마세요.:
-        - 접근권한 (access_permission): 만약 접근에 제한이 있는 페이지로 확인된다면 'HTTP 상태 코드', '없는 페이지', '로그인 필요' 등의 적절한 항목을 출력하고, 문제가 없다면 '정상'을 출력합니다.
-        - 파비콘 (favicon): 파비콘의 호스트 도메인을 포함한 전체 경로를 저장하며, 만약 여러 개라면 가장 큰 이미지의 것 한 개만 저장합니다.
-        - 호스트 도메인 (host_domain): 페이지의 호스트 도메인을 저장합니다.
-        - 호스트 이름 (host_name): 호스트의 이름을 한글로 출력하고, 한글이 없다면 영어로 출력합니다. (예시: 네이버 뉴스, 페이스북, 위키백과)
-        - 대체 URL (alternate_url): Canonical URL 또는 Open Graph URL이 존재한다면 이곳에 표시합니다.
-        - 제목 (title): 각종 정보를 종합한 제목을 출력합니다. (예시: '동아일보｜[이철희 칼럼] 형제애로 마련한 400억…감사 전한 튀르키예')
-        - 작성자 (author): 본문의 작성자를 출력합니다.
-        - 작성일 (date): 페이지의 작성일을 `yyyy-MM-dd` 형식으로 출력합니다.
-        - 본문 (content): 명백한 오타 수정을 제외한 텍스트 왜곡이 없으며, 표 내부의 내용 등을 포함한 누락 없는 본문을 출력합니다.
-        - 짧은 요약 (short_summary): 본문을 한글로 20자에서 90자 사이로 요약합니다.
-        - 긴 요약 (long_summary): 본문을 한글로 200자에서 400자 사이로 요약합니다.
-        - 키워드 (keywords): 본문의 키워드들을 출력합니다. 내용이 많고 주제가 폭넓다면 키워드가 많아져도 좋습니다.
-        - 유형 키워드 (category_keywords): 블로그, 카페, 기사, 정보, 사연, 에세이, 영상, 사진, 리뷰, 쇼핑, SNS, 커뮤니티, 자료실 등 그외 유형이라 할 수 있는 키워드들을 풍부하게 출력합니다.
-        - 댓글 (comments): 댓글이 있다면 예시의 형식에 따라 모두 저장합니다.
-        - 이미지 링크 (image_links): 본문 이미지를 예시의 형식에 따라 모두 저장합니다.
-        - 링크 (links): 본문 내에 주요한 외부 또는 내부 링크들이 있을 경우 예시의 형식에 따라 모두 저장합니다.
-        - 미디어 링크 (media_links): 본문 내에 비디오 및 오디오 등의 미디어가 있을 경우 예시의 형식에 따라 모두 저장합니다.
-        - 파일 다운로드 링크 (file_download_links): 주요한 PDF, 이미지, 문서 등의 다운로드 링크가 있을 경우 예시의 형식에 따라 모두 저장합니다.
-        - 콘텐츠의 길이 (content_length): 콘텐츠를 읽는 데 걸리는 예상 시간을 분 단위로 출력합니다. (예시: "2")
+        - 접근권한 (access_permission): 만약 접근에 제한이 있는 페이지로 확인된다면 'HTTP 상태 코드', '없는 페이지', '로그인 필요' 등의 적절한 항목을 출력하고, 문제가 없다면 '정상'을 출력.
+        - 파비콘 (favicon): 파비콘이 있다면 경로를 저장한다. png파일을 우선으로 한 개만 저장.
+        - 호스트 도메인 (host_domain): 페이지의 호스트 도메인을 저장.
+        - 호스트 이름 (host_name): 호스트의 이름을 한글로 출력하고, 한글이 없다면 영어로 출력. (예시: 네이버 뉴스, 페이스북, 위키백과)
+        - 대체 URL (alternate_url): Canonical URL 또는 Open Graph URL이 존재한다면 이곳에 표시.
+        - 제목 (title): 각종 정보를 종합한 제목을 출력. (예시: '동아일보｜[이철희 칼럼] 형제애로 마련한 400억…감사 전한 튀르키예')
+        - 작성자 (author): 본문의 작성자를 출력. 찾을수 없다면 공란으로 남겨둡니다.
+        - 작성일 (date): 페이지의 작성일을 `yyyy-MM-dd` 형식으로 출력.
+        - 본문 (content): 본문 내용 전체를 가급적 그대로 출력.줄 바꿈은 \\n 으로 나타냄. 연속 줄바꿈은 최대 2번씩만. 만일 너무 길어서 줄여야한다면 반드시 (중략),(후략) 등의 생략 표기를 할것.
+        - 짧은 요약 (short_summary): 본문을 한글로 20자에서 90자 사이로 요약.
+        - 긴 요약 (long_summary): 본문을 한글로 200자에서 400자 사이로 요약.
+        - 키워드 (keywords): 본문의 키워드들을 출력. 내용이 많고 주제가 폭넓다면 키워드가 많아짐. 키워드는 가급적 한단어로 나눠서 구성.
+        - 유형 키워드 (category_keywords): 블로그, 카페, 기사, 정보, 사연, 에세이, 영상, 사진, 리뷰, 쇼핑, SNS, 커뮤니티, 자료실 등 그외 유형이라 할 수 있는 키워드들을 출력.
+        - 댓글 (comments): 댓글을 찾아 예시의 형식에 따라 모두 저장.
+        - 이미지 링크 (image_links): 본문 이미지를 예시의 형식에 따라 모두 저장.
+        - 링크 (links): 본문 내에 주요한 외부 또는 내부 링크들이 있을 경우 예시의 형식에 따라 모두 저장.
+        - 미디어 링크 (media_links): 본문 내에 비디오 및 오디오 등의 미디어가 있을 경우 예시의 형식에 따라 모두 저장.
+        - 파일 다운로드 링크 (file_download_links): PDF, 이미지, 문서 등의 다운로드 링크가 있을 경우 예시의 형식에 따라 모두 저장.
+        - 콘텐츠의 길이 (content_length): 본문을 읽는 데 걸리는 대략적인 시간을 분 단위로 출력. (예시: "2")
 
-        HTML:
-        \"\"\"
-        {cleaned_html}
-        \"\"\"
-
-        JSON 형식 예시:
+        유효한 JSON 형식:
         {{
             "access_permission": "정상",
             "favicon": "https://www.example.com/favicon.ico",
             "host_domain": "example.com",
-            "host_name": "네이버 뉴스",
+            "host_name": "",
             "alternate_url": "https://www.example.com/page-url",
             "title": "제목",
-            "author": "작성자",
+            "author": "",
             "date": "yyyy-MM-dd",
-            "content": "본문 내용",
-            "short_summary": "본문을 20자에서 90자로 요약한 내용",
-            "long_summary": "본문을 200자에서 400자로 요약한 내용",
+            "content": "",
+            "short_summary": "",
+            "long_summary": "",
             "keywords": ["키워드1", "키워드2"],
             "category_keywords": ["블로그", "카페"],
             "comments": [
@@ -171,6 +166,12 @@ class HTMLSummariz:
             ],
             "content_length": m
         }}
+
+        정보를 추출할 HTML:
+        \"\"\"
+        {cleaned_html}
+        \"\"\"
+
         """
         try:
             response = openai.ChatCompletion.create(
@@ -180,7 +181,7 @@ class HTMLSummariz:
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.0,
-                max_tokens=10000,
+                max_tokens=16384,
                 timeout=30
             )
             extracted_info = response['choices'][0]['message']['content'].strip()
@@ -380,16 +381,20 @@ def search_by_text(query_text):
     try:
         response = es.search(index="pages", body=body)
         hits = response.get('hits', {}).get('hits', [])
-        results = []
-        for hit in hits:
-            source = hit['_source']
-            document_id = hit['_id']
-            highlight = hit.get('highlight', {})
-            results.append({
-                "id": document_id,
-                "source": source,
-                "highlight": highlight
-            })
+        # 하이라이트 제외
+        results = [{"id": hit.get("_id"), **hit.get("_source", {})} for hit in hits]
+        
+        # # 하이라이트 포함
+        # results = []
+        # for hit in hits:
+        #     source = hit['_source']
+        #     document_id = hit['_id']
+        #     highlight = hit.get('highlight', {})
+        #     results.append({
+        #         "id": document_id,
+        #         "source": source,
+        #         "highlight": highlight
+        #     })
         return results
     except Exception as e:
         return {"error": f"Failed to fetch documents: {str(e)}"}
