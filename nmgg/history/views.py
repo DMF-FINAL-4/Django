@@ -13,32 +13,36 @@ from .utils import *
 def new_history_save(request):
     try:
         data = json.loads(request.body)
+        print('1')
     except json.JSONDecodeError:
         return JsonResponse({"error": "Invalid JSON"}, status=400)
-    
+    print('2')
     url = data.get('url')
     html = data.get('html')
-
+    
     if not url or not html:
         return JsonResponse({"error": "URL and HTML content are required"}, status=400)
-
+    print('3')
     try:
+        print('3.1')
         favicon, title, cleaned_content = process_html(html, url)
+        print('3.2')
     except RuntimeError as e:
         return JsonResponse({"error": str(e)}, status=500)
-    
+    print(favicon, title, cleaned_content)
+    print('4')
     processed_data = {
         "url": url,
         "favicon": favicon,
         "title": title,
         "content": cleaned_content
     }
-
+    print('5')
     try:
         es_res_dict = upload_to_elasticsearch_history(processed_data)
     except RuntimeError as e:
         return JsonResponse({"error": str(e)}, status=500)
-    
+    print('6!')
     return JsonResponse(es_res_dict, status=201)
 
 @require_http_methods(["GET"])
