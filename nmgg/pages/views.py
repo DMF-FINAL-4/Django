@@ -91,30 +91,36 @@ def id_search(request, doc_id):
     else:
         return JsonResponse({"error": "Invalid HTTP method"}, status=405)
 
-@require_http_methods(["POST"])
+# @require_http_methods(["POST"])
 @csrf_exempt
 def tag_search(request):
+    print('1')
     try:
         data = json.loads(request.body)
     except json.JSONDecodeError:
         return JsonResponse({"error": "Invalid JSON"}, status=400)
+    print('2')
 
     required_fields = ['tag', 'keyword', 'method']
     missing_field_response = validate_required_fields(data, required_fields)
+    print('3')
     if missing_field_response:
         return missing_field_response
+    print('4')
     
     tag = data.get('tag')
     keyword = data.get('keyword')
     method = data.get('method')
-    
+    print('5')
     try:
         tag_search_results = search_by_tkm(tag, keyword, method)
+        print(tag_search_results)
     except RuntimeError as e:
         return JsonResponse({"error": str(e)}, status=500)
     
     if isinstance(tag_search_results, dict) and 'error' in tag_search_results:
         return JsonResponse(tag_search_results, status=400)
+    print('6')
     return JsonResponse(tag_search_results, safe=False)
 
 @require_http_methods(["POST"])
@@ -139,20 +145,23 @@ def text_search(request):
     # print(text_search_results)
     return JsonResponse(text_search_results, safe=False)
 
-@require_http_methods(["GET"])
+# @require_http_methods(["GET"])
 @csrf_exempt
 def similar_search(request):
     try:
         data = json.loads(request.body)
     except json.JSONDecodeError:
         return JsonResponse({"error": "Invalid JSON"}, status=400)
+    print(data)
     
     if 'doc_id' not in data:
         return JsonResponse({"error": "doc_id is required"}, status=400)
     
     doc_id = data.get('doc_id')
+    print(doc_id)
     try:
         similar_search_results = search_by_similarity(doc_id)
+        print(similar_search_results)
     except RuntimeError as e:
         return JsonResponse({"error": str(e)}, status=500)
     

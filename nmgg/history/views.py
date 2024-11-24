@@ -42,22 +42,23 @@ def new_history_save(request):
         es_res_dict = upload_to_elasticsearch_history(processed_data)
     except RuntimeError as e:
         return JsonResponse({"error": str(e)}, status=500)
+    print(es_res_dict)
     print('6!')
     return JsonResponse(es_res_dict, status=201)
 
 @require_http_methods(["GET"])
 @csrf_exempt
-def history_full_list(request):
+def history_full_list(request, list_no):
     try:
-        full_list = search_full_list_history()
+        full_list = search_full_list_history(page=list_no)
     except RuntimeError as e:
         return JsonResponse({"error": str(e)}, status=500)
 
     return JsonResponse(full_list, safe=False)
 
-@require_http_methods(["GET"])
-@csrf_exempt
-def history_id_search(request, doc_id):
+# @require_http_methods(["GET"])
+# @csrf_exempt
+# def history_id_search(request, doc_id):
     try:
         id_search_results = search_by_id_history(doc_id)
     except RuntimeError as e:
@@ -65,7 +66,32 @@ def history_id_search(request, doc_id):
     
     return JsonResponse(id_search_results, safe=False)
 
-@require_http_methods(["GET"])
+@csrf_exempt
+def history_id_search(request, doc_id):
+    if request.method == 'GET':
+        try:
+            id_search_results = search_by_id_history(doc_id)
+        except RuntimeError as e:
+            return JsonResponse({"error": str(e)}, status=500)
+        
+        if isinstance(id_search_results, dict) and 'error' in id_search_results:
+            return JsonResponse(id_search_results, status=400)
+        return JsonResponse(id_search_results, safe=False)
+    elif request.method == 'DELETE':
+        print('삭제요청확인')
+        try:
+            delete_results = delete_by_id_history(doc_id)
+        except RuntimeError as e:
+            return JsonResponse({"error": str(e)}, status=500)
+        if isinstance(delete_results, dict) and 'error' in delete_results:
+            return JsonResponse(delete_results, status=400)
+        return JsonResponse(delete_results, status=200)
+    
+    else:
+        return JsonResponse({"error": "Invalid HTTP method"}, status=405)
+
+
+@require_http_methods(["POST"])
 @csrf_exempt
 def history_text_search(request):
     try:

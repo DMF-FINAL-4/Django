@@ -98,7 +98,7 @@ def upload_to_elasticsearch_history(processed_json, index='history', pipeline='a
         raise RuntimeError(f"Elasticsearch 업로드 오류: {str(e)}")
 
 
-def search_full_list_history(page=0, size=10):
+def search_full_list_history(page=0, size=50):
     es = get_elasticsearch_client()
     body = {
         "_source": ["url", "favicon", "title", "created_at"],
@@ -128,6 +128,20 @@ def search_full_list_history(page=0, size=10):
         return {'status': 'error', 'message': f'알 수 없는 오류 발생: {str(e)}'}
 
 
+# def search_by_id_history(doc_id):
+#     es = get_elasticsearch_client()
+#     try:
+#         response = es.get(index='history', id=doc_id)
+#         id_search_results = response["_source"]
+#         id_search_results["id"] = response["_id"]
+#         return id_search_results
+#     except NotFoundError:
+#         return {"error": f"Document with ID {doc_id} not found."}
+#     except RequestError as e:
+#         return {"error": f"Failed to fetch document due to request error: {str(e)}"}
+#     except Exception as e:
+#         return {"error": f"An unexpected error occurred: {str(e)}"}
+
 def search_by_id_history(doc_id):
     es = get_elasticsearch_client()
     try:
@@ -142,6 +156,37 @@ def search_by_id_history(doc_id):
     except Exception as e:
         return {"error": f"An unexpected error occurred: {str(e)}"}
 
+def delete_by_id_history(doc_id):
+    es = get_elasticsearch_client()
+    try:
+        # 먼저 문서를 가져와서 삭제 전의 데이터를 저장합니다.
+        response = es.get(index='history', id=doc_id)
+        id_search_results = response["_source"]
+        id_search_results["id"] = response["_id"]
+        
+        # 문서를 삭제합니다.
+        delete_response = es.delete(index='history', id=doc_id)
+        print('삭제 요청 완료')
+        
+        # 삭제 결과를 확인합니다.
+        if delete_response.get('result') == 'deleted':
+            print('삭제 결과 확인')
+            return {
+                "message": f"Document with ID {doc_id} successfully deleted.",
+                "deleted_document": id_search_results
+            }
+        else:
+            return {
+                "error": f"Failed to delete document with ID {doc_id}.",
+                "details": delete_response
+            }
+    
+    except NotFoundError:
+        return {"error": f"Document with ID {doc_id} not found."}
+    except RequestError as e:
+        return {"error": f"Failed to delete document due to request error: {str(e)}"}
+    except Exception as e:
+        return {"error": f"An unexpected error occurred: {str(e)}"}
 
 def search_by_text_history(query_text):
     es = get_elasticsearch_client()
@@ -169,15 +214,18 @@ def search_by_text_history(query_text):
         response = es.search(index="history", body=body)
         hits = response.get('hits', {}).get('hits', [])
         results = []
-        for hit in hits:
-            source = hit['_source']
-            document_id = hit['_id']
-            highlight = hit.get('highlight', {})
-            results.append({
-                "id": document_id,
-                "source": source,
-                "highlight": highlight  # 검색 결과와 하이라이트된 부분 포함
-            })
+        # for hit in hits:
+        #     source = hit['_source']
+        #     document_id = hit['_id']
+        #     highlight = hit.get('highlight', {})
+        #     results.append({
+        #         "id": document_id,
+        #         "source": source,
+        #         "highlight": highlight  # 검색 결과와 하이라이트된 부분 포함
+        #     })
+        # 하이라이트 제외
+        results = [{"highlight": hit.get("highlight", {}) ,"id": hit.get("_id"), **hit.get("_source", {})} for hit in hits]
+        
         return results  # 캡션: 검색 결과와 하이라이트된 부분을 함께 반환합니다.
     except Exception as e:
         return {"error": f"Failed to fetch documents: {str(e)}"}
